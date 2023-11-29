@@ -1,0 +1,14 @@
+0, left, 3, invert y, dir = right
+0, up, 5, flip x/y, dir = right
+1, up, 5, invert y, dir = up
+1, right, 4, invert y, dir = left
+1, down, 2, flip x/y, dir = left
+2, left, 3, flip x/y, dir = down
+2, right, 1, flip x/y, dir = up
+3, left, 0, invert y, dir = right
+3, up, 2, flip x/y, dir = right
+4, right, 1, invert y, dir = left
+4, down, 5, flip x/y, dir = left
+5, left, 0, flip x/y, dir = down
+5, down, 1, invert y, dir = down
+5, right, 4, flip x/y, dir = up
