@@ -20,7 +20,9 @@ def init_input(year: int, day: int, path: str) -> bool:
     r = requests.get(url, headers=headers, timeout=5)
 
     if r.status_code != 200:
-        raise IOError(f"Error getting input: HTTP {r.status_code}: {r.reason} \n{r.text}")
+        raise IOError(
+            f"Error getting input: HTTP {r.status_code}: {r.reason} \n{r.text}"
+        )
 
     with open(path, mode="w", encoding="utf-8") as f:
         f.write(r.text)
@@ -53,7 +55,7 @@ def main():
     year = args.year
     day = args.day
 
-    path = os.path.join(year, day)
+    path = os.path.join(str(year), str(day))
     os.makedirs(path, exist_ok=True)
 
     input_path = os.path.join(path, "input.txt")
