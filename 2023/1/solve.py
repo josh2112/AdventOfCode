@@ -31,7 +31,7 @@ def prob_2(data: list[str]):
 
     ans = 0
 
-    # Clue: ordering is important! "twoone" is 2 if at the beginning of a line and 1 if at the end!
+    # Clue: ordering is important! "twone" is 2 if at the beginning of a line and 1 if at the end!
     for ln in data:
         for c in range(len(ln)):
             first = find_digit(ln, c)
