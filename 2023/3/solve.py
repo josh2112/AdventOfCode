@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# https://adventofcode.com/$year/day/$day
+# https://adventofcode.com/2023/day/3
 
 # Input file path, or None for the default, "input.txt"
 INPUT = None

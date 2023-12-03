@@ -2,6 +2,7 @@
 import argparse
 import datetime
 import os
+from string import Template
 
 from dotenv import load_dotenv
 
@@ -30,14 +31,14 @@ def init_input(year: int, day: int, path: str) -> bool:
     return True
 
 
-def init_script(path: str) -> bool:
+def init_script(year: int, day: int, path: str) -> bool:
     if os.path.exists(path):
         print(f"Warning: {path} already exists, skipping")
         return False
 
     with open(path, "x", encoding="utf-8") as dest:
         with open("solve.template.py", "r", encoding="utf-8") as src:
-            dest.write(src.read())
+            dest.write(Template(src.read()).substitute(year=year, day=day))
 
     os.chmod(path, 0o744)
     return True
@@ -63,7 +64,7 @@ def main():
         print(f"Wrote input: {input_path}")
 
     script_path = os.path.join(path, "solve.py")
-    if init_script(script_path):
+    if init_script(year, day, script_path):
         print(f"Wrote script: {script_path}")
 
 

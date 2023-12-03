@@ -2,8 +2,10 @@
 import math
 import re
 
+# https://adventofcode.com/2023/day/3
+
 # Input file path, or None for the default, "input.txt"
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Daily problem to solve, 1 or 2
 PROBLEM = 2
