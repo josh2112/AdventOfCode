@@ -6,20 +6,29 @@
 INPUT = "input.txt"
 
 # Daily problem to solve, 1 or 2
-PROBLEM = 1
+PROBLEM = 2
+
+
+class Card:
+    def __init__(self, line: str):
+        self.count = 1
+        part1, part2 = line.split(":")
+        self.index = int(part1.split()[1]) - 1
+        self.nums1, self.nums2 = [[int(d) for d in part.split()] for part in part2.split("|")]
+        self.num_matches = len(set(self.nums1).intersection(set(self.nums2)))
 
 
 def prob_1(data: list[str]):
-    make_list = lambda parts: [[int(d) for d in part.split()] for part in parts]
-    rows = [make_list(line.split(":")[1].split("|")) for line in data]
-    # return sum(pow(2, len([set(r[0]).intersection(set(r[1])) for r in rows])))
-    num_matches = [len(set(r[0]).intersection(set(r[1]))) for r in rows]
-    return sum(pow(2, n - 1) if n > 0 else 0 for n in num_matches)
-    # return sum(pow(2, len(set(r[0]).intersection(set(r[1]))) - 1) for r in rows)
+    cards = [Card(line) for line in data]
+    return sum(pow(2, n - 1) if n > 0 else 0 for n in [c.num_matches for c in cards])
 
 
 def prob_2(data: list[str]):
-    print(data)
+    cards = [Card(line) for line in data]
+    for c, card in enumerate(cards):
+        for i in range(c + 1, c + 1 + card.num_matches):
+            cards[i].count += card.count
+    return sum(c.count for c in cards)
 
 
 def main():

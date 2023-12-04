@@ -1,0 +1,13 @@
+{
+    "folders": [
+        {
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "pylint.args": [
+            "--disable=missing-class-docstring",
+            "--disable=missing-function-docstring"
+        ]
+    }
+}
