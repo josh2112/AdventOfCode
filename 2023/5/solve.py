@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 import time
+import sys
+from typing import Sequence, Tuple
 
 # https://adventofcode.com/2023/day/5
 
@@ -24,39 +26,88 @@ class Mapping:
     ranges: list[Range] = field(default_factory=list)
 
     def map(self, seed: int):
-        r = next((r for r in self.ranges if seed >= r.src_start and seed <= r.src_start + r.length), None)
+        r = next(
+            (
+                r
+                for r in self.ranges
+                if seed >= r.src_start and seed <= r.src_start + r.length
+            ),
+            None,
+        )
         return seed + r.dst_start - r.src_start if r else seed
 
+    def map_rev(self, seed: int):
+        r = next(
+            (
+                r
+                for r in self.ranges
+                if seed >= r.dst_start and seed <= r.dst_start + r.length
+            ),
+            None,
+        )
+        return seed + r.src_start - r.dst_start if r else seed
 
-def find_best_location(seeds: list[int], data: list[str]):
-    mappings: list[Mapping] = []
-    for line in data[1:]:
+
+def make_mappings(data: list[str]):
+    m = Mapping()
+    for line in data[3:]:
         if not line:
             continue
         if line[0].isalpha():
-            mappings.append(Mapping())
+            yield m
+            m = Mapping()
         else:
-            mappings[-1].ranges.append(Range(*[int(v) for v in line.split()]))
-    best = None
+            m.ranges.append(Range(*[int(v) for v in line.split()]))
+    return m
+
+
+def find_best_location(
+    seeds: Sequence[int],
+    mappings: list[Mapping],
+    prev_best: Tuple[int, int] = (-1, sys.maxsize),
+) -> Tuple[int, int]:
+    best = prev_best
     for seed in seeds:
         v = seed
         for m in mappings:
             v = m.map(v)
         if not best or v < best[1]:
             best = (seed, v)
-    return best[1]
+    return best
+
+
+def find_best_location_rev(seed_ranges: list[range], mappings: list[Mapping]):
+    mappings = list(reversed(mappings))
+    loc = 0
+    while True:
+        v = loc
+        for m in mappings:
+            v = m.map_rev(v)
+        # is v a valid seed?
+        if next((v in rng for rng in seed_ranges), None):
+            return loc
+        if not (loc % 1000000):
+            print(loc)
+        loc += 1
 
 
 def prob_1(data: list[str]):
     seeds = [int(s) for s in data[0].split()[1:]]
-    return find_best_location(seeds, data)
+    mappings = list(make_mappings(data))
+    return find_best_location(seeds, mappings)[1]
 
 
+# TODO: This got to 40 million and still didn't find an answer.
+# Alternate strategy: Check the start and end of each range, then work inward from the
+# lowest location value?
 def prob_2(data: list[str]):
+    mappings = list(make_mappings(data))
     seed_ranges = [int(s) for s in data[0].split()[1:]]
-    seeds = [list(range(seed_ranges[i], seed_ranges[i] + seed_ranges[i + 1])) for i in range(0, len(seed_ranges), 2)]
-    seeds = [s for g in seeds for s in g]
-    return find_best_location(seeds, data)
+    seed_ranges = [
+        range(seed_ranges[i], seed_ranges[i] + seed_ranges[i + 1])
+        for i in range(0, len(seed_ranges), 2)
+    ]
+    return find_best_location_rev(seed_ranges, mappings)
 
 
 def main():
