@@ -30,9 +30,7 @@ def solve_quad(a: float, b: float, c: float):
     return ((-b + discr) / (2 * a), (-b - discr) / (2 * a))
 
 
-def prob_1(data: list[str]):
-    data2 = [line.split()[1:] for line in data]
-    races = [Race(int(data2[0][i]), int(data2[1][i])) for i in range(len(data2[0]))]
+def solve_races(races: list[Race]):
     num_ways = []
     for race in races:
         crossings = solve_quad(-1, race.time, -race.dist)
@@ -44,14 +42,14 @@ def prob_1(data: list[str]):
     return int(math.prod(num_ways))
 
 
+def prob_1(data: list[str]):
+    data2 = [line.split()[1:] for line in data]
+    return solve_races(Race(int(data2[0][i]), int(data2[1][i])) for i in range(len(data2[0])))
+
+
 def prob_2(data: list[str]):
-    time, dist = [int(line.split(":")[1].replace(" ", "")) for line in data]
-    crossings = solve_quad(-1, time, -dist)
-    return (
-        (crossings[1] - 1 if crossings[1] == int(crossings[1]) else math.floor(crossings[1]))
-        - (crossings[0] + 1 if crossings[0] == int(crossings[0]) else math.ceil(crossings[0]))
-        + 1
-    )
+    t, d = [int(line.split(":")[1].replace(" ", "")) for line in data]
+    return solve_races([Race(t, d)])
 
 
 def main():
