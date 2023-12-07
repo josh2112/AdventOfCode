@@ -97,9 +97,10 @@ def prob_1(data: list[str]):
     return find_best_location(seeds, mappings)[1]
 
 
-# TODO: This got to 40 million and still didn't find an answer.
-# Alternate strategy: Check the start and end of each range, then work inward from the
-# lowest location value?
+# Problem 2: 316960384
+# Time: 3083.6658823000034 s
+# "Answer too high!"
+# Is it an off by one error? try ...5 or ...3?
 def prob_2(data: list[str]):
     mappings = list(make_mappings(data))
     seed_ranges = [int(s) for s in data[0].split()[1:]]
