@@ -16,9 +16,12 @@ PART = 2
 
 @dataclass
 class Range:
-    dst_start: int
-    src_start: int
-    length: int
+    src: range
+    dst: range
+
+    def __init__(self, dst: int, src: int, length: int):
+        self.dst = range(dst, dst + length)
+        self.src = range(src, src + length)
 
 
 @dataclass
@@ -27,25 +30,17 @@ class Mapping:
 
     def map(self, seed: int):
         r = next(
-            (
-                r
-                for r in self.ranges
-                if seed >= r.src_start and seed <= r.src_start + r.length
-            ),
+            (r for r in self.ranges if seed in r.src),
             None,
         )
-        return seed + r.dst_start - r.src_start if r else seed
+        return seed + r.dst.start - r.src.start if r else seed
 
     def map_rev(self, seed: int):
         r = next(
-            (
-                r
-                for r in self.ranges
-                if seed >= r.dst_start and seed <= r.dst_start + r.length
-            ),
+            (r for r in self.ranges if seed in r.dst),
             None,
         )
-        return seed + r.src_start - r.dst_start if r else seed
+        return seed + r.src.start - r.dst.start if r else seed
 
 
 def make_mappings(data: list[str]):
@@ -78,15 +73,20 @@ def find_best_location(
 
 def find_best_location_rev(seed_ranges: list[range], mappings: list[Mapping]):
     mappings = list(reversed(mappings))
+    # We know (maybe) that 316960383 and 316960384 are valid seeds but
+    # the answer is less than those?
     loc = 0
     while True:
         v = loc
         for m in mappings:
             v = m.map_rev(v)
         # is v a valid seed?
-        if next((v in rng for rng in seed_ranges), None):
+        rng = next((r for r in seed_ranges if v in r), None)
+        if rng:
+            print(f"Found valid loc {loc} (seed {v}, range {rng})")
             return loc
-        if not (loc % 1000000):
+        # print("location maps to invalid seed:", v)
+        if not loc % 1000000:
             print(loc)
         loc += 1
 
@@ -97,17 +97,10 @@ def prob_1(data: list[str]):
     return find_best_location(seeds, mappings)[1]
 
 
-# Problem 2: 316960384
-# Time: 3083.6658823000034 s
-# "Answer too high!"
-# Is it an off by one error? try ...5 or ...3?
 def prob_2(data: list[str]):
     mappings = list(make_mappings(data))
-    seed_ranges = [int(s) for s in data[0].split()[1:]]
-    seed_ranges = [
-        range(seed_ranges[i], seed_ranges[i] + seed_ranges[i + 1])
-        for i in range(0, len(seed_ranges), 2)
-    ]
+    sr = [int(s) for s in data[0].split()[1:]]
+    seed_ranges = [range(sr[i], sr[i] + sr[i + 1]) for i in range(0, len(sr), 2)]
     return find_best_location_rev(seed_ranges, mappings)
 
 
