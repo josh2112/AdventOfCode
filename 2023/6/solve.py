@@ -19,40 +19,39 @@ class Race:
     dist: int
 
 
+# for x in each possible hold-down-button length:
+# dist = (race.time - x) * x
+# 0 = - x^2 + (race.time * x) - dist
+# quadratic equation with a = -1, b = race.time, c = -dist
+
+
+def solve_quad(a: float, b: float, c: float):
+    discr = math.sqrt(b * b - 4 * a * c)
+    return ((-b + discr) / (2 * a), (-b - discr) / (2 * a))
+
+
 def prob_1(data: list[str]):
     data2 = [line.split()[1:] for line in data]
     races = [Race(int(data2[0][i]), int(data2[1][i])) for i in range(len(data2[0]))]
     num_ways = []
     for race in races:
-        i0, i1 = -1, -1
-        for t in range(1, race.time):
-            dist = (race.time - t) * t
-            if dist > race.dist:
-                i0 = t
-                break
-        for t in range(race.time - 1, 1, -1):
-            dist = (race.time - t) * t
-            if dist > race.dist:
-                i1 = t
-                break
-        num_ways.append(i1 - i0 + 1)
-    return math.prod(num_ways)
+        crossings = solve_quad(-1, race.time, -race.dist)
+        num_ways.append(
+            (crossings[1] - 1 if crossings[1] == int(crossings[1]) else math.floor(crossings[1]))
+            - (crossings[0] + 1 if crossings[0] == int(crossings[0]) else math.ceil(crossings[0]))
+            + 1
+        )
+    return int(math.prod(num_ways))
 
 
 def prob_2(data: list[str]):
     time, dist = [int(line.split(":")[1].replace(" ", "")) for line in data]
-    i0, i1 = -1, -1
-    for t in range(1, time):
-        d = (time - t) * t
-        if d > dist:
-            i0 = t
-            break
-    for t in range(time - 1, 1, -1):
-        d = (time - t) * t
-        if d > dist:
-            i1 = t
-            break
-    return i1 - i0 + 1
+    crossings = solve_quad(-1, time, -dist)
+    return (
+        (crossings[1] - 1 if crossings[1] == int(crossings[1]) else math.floor(crossings[1]))
+        - (crossings[0] + 1 if crossings[0] == int(crossings[0]) else math.ceil(crossings[0]))
+        + 1
+    )
 
 
 def main():
