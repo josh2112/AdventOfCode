@@ -73,19 +73,14 @@ def find_best_location(
 
 def find_best_location_rev(seed_ranges: list[range], mappings: list[Mapping]):
     mappings = list(reversed(mappings))
-    # We know (maybe) that 316960383 and 316960384 are valid seeds but
-    # the answer is less than those?
     loc = 0
     while True:
         v = loc
         for m in mappings:
             v = m.map_rev(v)
         # is v a valid seed?
-        rng = next((r for r in seed_ranges if v in r), None)
-        if rng:
-            print(f"Found valid loc {loc} (seed {v}, range {rng})")
+        if next((r for r in seed_ranges if v in r), None):
             return loc
-        # print("location maps to invalid seed:", v)
         if not loc % 1000000:
             print(loc)
         loc += 1
