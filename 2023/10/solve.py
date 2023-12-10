@@ -5,7 +5,7 @@ import time
 # https://adventofcode.com/2023/day/10
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex2.txt"
+INPUT = "input.ex3.txt"
 
 # Part to solve, 1 or 2
 PART = 2
@@ -31,6 +31,7 @@ def prob_1(data: list[str]):
     else:
         vec = UP
 
+    ispipe[y][x] = True
     x += vec[0]
     y += vec[1]
     dist += 1
@@ -54,10 +55,29 @@ def prob_1(data: list[str]):
     return dist / 2, ispipe
 
 
+def do_line(col: list[str], y: int, ispipe: list[list[bool]]):
+    io = "O"
+    last_bend = None
+    for x, c in enumerate(col):
+        if not ispipe[y][x]:
+            col[x] = io
+        elif c == "|":
+            io = "O" if io == "I" else "I"
+        elif not last_bend:
+            last_bend = c
+        else:
+            double = last_bend + c
+            if double == "FJ" or double == "L7":
+                io = "O" if io == "I" else "O"
+            elif double == "F7" or double == "LJ":
+                pass  # Stay on same side
+
+
 def prob_2(data: list[str]):
     _, ispipe = prob_1(data)
 
     d = [[c for c in line] for line in data]
+
     y = next(y for y, line in enumerate(d) if "S" in line)
     x = d[y].index("S")
 
@@ -76,23 +96,17 @@ def prob_2(data: list[str]):
     else:
         d[y][x] = "|"
 
-    for y, col in enumerate(d):
-        io = "O"
-        last_bend = None
-        for x, c in enumerate(col):
-            if not ispipe[y][x]:
-                col[x] = io
-            elif c == "|":
-                io = "O" if io == "I" else "O"
-            elif not last_bend:
-                last_bend = c
-            else:
-                double = last_bend + c
-                if double == "FJ" or double == "L7":
-                    io = "O" if io == "I" else "O"
-                elif double == "F7" or double == "LJ":
-                    pass  # Stay on same side
-    print("\n".join("".join(line) for line in d))
+    # print("\n".join("".join("X" if p else "." for p in line) for line in ispipe))
+    # print(f"S at {x}, {y} replaced with {d[y][x]}")
+
+    print("".join("X" if p else "." for p in ispipe[3]))
+    print("".join(d[3]))
+    do_line(d[3], 3, ispipe)
+
+    # for y, col in enumerate(d):
+    # do_line(col, y, ispipe)
+
+    # print("\n".join("".join(line) for line in d))
 
 
 def main():
