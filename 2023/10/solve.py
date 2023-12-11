@@ -5,19 +5,14 @@ import time
 # https://adventofcode.com/2023/day/10
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex3.txt"
+INPUT = "input.txt"
 
 # Part to solve, 1 or 2
 PART = 2
 
-starting_vec = {
-    "|7F": (0, -1),
-}
-
-LEFT, RIGHT, DOWN, UP = (-1, 0), (1, 0), (0, 1), (0, -1)
-
 
 def prob_1(data: list[str]):
+    LEFT, RIGHT, DOWN, UP = (-1, 0), (1, 0), (0, 1), (0, -1)
     d = [[c for c in line] for line in data]
     ispipe = [[False for c in line] for line in data]
     ystart = next(y for y, line in enumerate(d) if "S" in line)
@@ -45,8 +40,6 @@ def prob_1(data: list[str]):
             vec = DOWN if vec == RIGHT else LEFT
         elif d[y][x] == "F":  # left -> down, up -> right
             vec = DOWN if vec == LEFT else RIGHT
-        # elif data[y][x] == '|' or data[y][x] == '-':
-        #     do nothing, just continue along direction
 
         ispipe[y][x] = True
         x += vec[0]
@@ -65,12 +58,13 @@ def do_line(col: list[str], y: int, ispipe: list[list[bool]]):
             io = "O" if io == "I" else "I"
         elif not last_bend:
             last_bend = c
-        else:
+        elif c in "FJL7":
             double = last_bend + c
             if double == "FJ" or double == "L7":
-                io = "O" if io == "I" else "O"
+                io = "O" if io == "I" else "I"
             elif double == "F7" or double == "LJ":
                 pass  # Stay on same side
+            last_bend = None
 
 
 def prob_2(data: list[str]):
@@ -96,17 +90,10 @@ def prob_2(data: list[str]):
     else:
         d[y][x] = "|"
 
-    # print("\n".join("".join("X" if p else "." for p in line) for line in ispipe))
-    # print(f"S at {x}, {y} replaced with {d[y][x]}")
+    for y, col in enumerate(d):
+        do_line(col, y, ispipe)
 
-    print("".join("X" if p else "." for p in ispipe[3]))
-    print("".join(d[3]))
-    do_line(d[3], 3, ispipe)
-
-    # for y, col in enumerate(d):
-    # do_line(col, y, ispipe)
-
-    # print("\n".join("".join(line) for line in d))
+    return sum(sum(1 if c == "I" else 0 for c in line) for line in d)
 
 
 def main():
