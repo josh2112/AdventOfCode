@@ -1,61 +1,67 @@
 #!/usr/bin/env python3
 
-import more_itertools
 import time
-import re
+import functools
+from typing import Tuple
 
 # https://adventofcode.com/2023/day/12
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex.txt"
+INPUT = "input.txt"
 
-# Part to solve, 1 or 2
+# Part to solve, 1 or 2 (or 0 for test cases)
 PART = 2
+
+row: Tuple[str, ...] = ("",)
+
+
+@functools.cache
+def bfs(
+    row_idx: int,
+    repl_first: str,
+    groups: Tuple[int, ...],
+    group_cnt: int,
+) -> int:
+    for i in range(row_idx, len(row)):
+        c = repl_first if i == row_idx and repl_first else row[i]
+        if c == "#":
+            # Are we out of groups or have we overrun the current group?
+            if not groups or group_cnt == groups[0]:
+                return 0
+            group_cnt += 1
+        elif c == ".":
+            if group_cnt > 0:  # Are we coming off a group?
+                if group_cnt != groups[0]:  # Were there not enough #s in this group?
+                    return 0
+                group_cnt = 0
+                groups = groups[1:]
+        else:  # It's a '?'
+            total = 0
+            if groups and group_cnt < groups[0]:
+                total += bfs(i, "#", groups, group_cnt)
+            if not groups or group_cnt == 0 or group_cnt == groups[0]:
+                total += bfs(i, ".", groups, group_cnt)
+            return total
+
+    return 1 if not groups or (len(groups) == 1 and group_cnt == groups[0]) else 0
+
+
+def test():
+    global row
+    row = tuple([r for r in ".????."])
+    return bfs(0, "", (1, 1), 0)
 
 
 def prob_1(data: list[str]):
+    global row
     num = 0
     for line in data:
-        print(data.index(line))
-        row, groups = line.split()
+        rowtmp, groups = line.split()
+        row = tuple([r for r in rowtmp])
         groups = [int(i) for i in groups.split(",")]
-        qs = [i for i, c in enumerate(row) if c == "?"]
-        needed = sum(int(i) for i in groups) - len([c for c in row if c == "#"])
-
-        for repl in more_itertools.distinct_permutations(
-            ["."] * (len(qs) - needed) + ["#"] * needed
-        ):
-            last = "."
-            repl_index = 0
-            group_cnt = 0
-            group_index = 0
-            fail = False
-            # print("Trying", repl)
-            for c in row:
-                if c == "?":
-                    c = repl[repl_index]
-                    repl_index += 1
-                if c == "." and last == "#":
-                    # end of group
-                    if group_cnt == groups[group_index]:
-                        group_index += 1
-                        group_cnt = 0
-                    else:
-                        fail = True
-                        break
-                elif c == "#":
-                    group_cnt += 1
-                last = c
-            if not fail and (
-                group_index == len(groups) or group_cnt == groups[group_index]
-            ):
-                num += 1
+        bfs.cache_clear()
+        num += bfs(0, "", tuple(groups), 0)
     return num
-
-
-# This doesn't complete even the first line of the real input :-/
-# TODO: Alternate approach - recursion? Walk the string, every time we see a '?'
-# branch out into possibilities of . and #, stopping if we break a group constraint
 
 
 def prob_2(data: list[str]):
@@ -72,7 +78,13 @@ def main():
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
+    match PART:
+        case 0:
+            result = test()
+        case 1:
+            result = prob_1(data)
+        case 2:
+            result = prob_2(data)
     elapsed = time.perf_counter() - start
 
     print(f"Problem {PART}: {result}")

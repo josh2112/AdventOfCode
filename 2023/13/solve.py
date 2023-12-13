@@ -32,7 +32,7 @@ def find_reflection(data: list[str], prob2: bool):
 
 def find_reflections(data: list[str], prob2: bool):
     vert = find_reflection(data, prob2)
-    horiz = find_reflection(list(map(list, zip(*data))), prob2)
+    horiz = find_reflection(list(map(list, zip(*data))), prob2)  # type: ignore
     return vert * 100 + horiz
 
 
