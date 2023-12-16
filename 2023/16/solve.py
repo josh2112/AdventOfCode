@@ -8,7 +8,7 @@ import time
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 refl = {
     "/": {(1, 0): (0, -1), (-1, 0): (0, 1), (0, 1): (-1, 0), (0, -1): (1, 0)},
@@ -17,15 +17,12 @@ refl = {
 
 
 class Prob1:
-    def __init__(self, data: list[str]):
-        self.grid = [["X"] + [g for g in line] + ["X"] for line in data]
-        self.grid.insert(0, ["X"] * len(self.grid[0]))
-        self.grid.append(["X"] * len(self.grid[0]))
+    def __init__(self, grid: list[list[str]]):
+        self.grid = grid
         self.energized = set()
         # self.limit = 999
 
-    def solve(self):
-        loc, vec = (0, 1), (1, 0)
+    def solve(self, loc, vec):
         # self.energized.add((loc, vec))
         self.project(loc, vec, 0)
         return len(set(loc for loc, _ in self.energized))
@@ -62,10 +59,11 @@ class Prob1:
 
 
 def prob_1(data: list[str]):
-    p = Prob1(data)
-    solution = p.solve()
-    # p.print_energized()
-    return solution
+    grid = [["X"] + [g for g in line] + ["X"] for line in data]
+    grid.insert(0, ["X"] * len(grid[0]))
+    grid.append(["X"] * len(grid[0]))
+
+    return Prob1(grid).solve((0, 1), (1, 0))
 
 
 # Start from ANY edge, heading inward (corners can be either direction),
@@ -73,7 +71,26 @@ def prob_1(data: list[str]):
 # Note: project(loc,vec) should return the number of tiles it will eventually energize.
 # Must keep its own copy of self.energized?
 def prob_2(data: list[str]):
-    print(data)
+    grid = [["X"] + [g for g in line] + ["X"] for line in data]
+    grid.insert(0, ["X"] * len(grid[0]))
+    grid.append(["X"] * len(grid[0]))
+
+    max_sol = 0
+    xmax = len(grid[0]) - 1
+    ymax = len(grid) - 1
+    for x in range(1, xmax - 1):
+        max_sol = max(
+            max_sol,
+            Prob1(grid).solve((x, 0), (0, 1)),
+            Prob1(grid).solve((x, ymax), (0, -1)),
+        )
+    for y in range(1, ymax - 1):
+        max_sol = max(
+            max_sol,
+            Prob1(grid).solve((0, y), (1, 0)),
+            Prob1(grid).solve((xmax, 0), (-1, 0)),
+        )
+    return max_sol
 
 
 def main():
