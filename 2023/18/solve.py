@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import math
 import time
+from dataclasses import dataclass
 
 # https://adventofcode.com/2023/day/18
 
@@ -13,6 +13,18 @@ PART = 1
 
 dirs = {"R": (1, 0), "U": (0, -1), "D": (0, 1), "L": (-1, 0)}
 dirs_ordered = ["R", "D", "L", "U"]
+
+
+@dataclass(frozen=True)
+class Point:
+    x: int
+    y: int
+
+
+@dataclass(frozen=True)
+class Edge:
+    v0: Point
+    v1: Point
 
 
 def flood_fill(border: set[tuple[int, int]], x: int, y: int):
@@ -60,16 +72,72 @@ def outline(instrs: list[tuple[int, str]]):
     return len(cubes)
 
 
-def prob_1(data: list[str]):
-    instrs = [(int(num), dr) for dr, num, _ in [line.split() for line in data]]
+def gen_edges(instrs: list[tuple[int, str]]):
     loc = (0, 0)
-    coords = [loc]
+    loc_prev = loc
     for num, dr in instrs:
         loc = (loc[0] + dirs[dr][0] * num, loc[1] + dirs[dr][1] * num)
-        coords.append(loc)
-    print(math.gcd(*[x for x, y in coords]))
-    print(math.gcd(*[y for x, y in coords]))
-    return outline(instrs)
+        if dr in ("R", "D"):
+            yield Edge(Point(*loc_prev), Point(*loc))
+        else:
+            yield Edge(Point(*loc), Point(*loc_prev))
+        loc_prev = loc
+
+
+# TODO: Still doesn't work for scanline 12 of input.txt part 1...
+def calc_scanline_volume(y: int, edges: list[Edge]) -> int:
+    volume = 0
+    last_vert = None
+    last_edge = None
+    inside = False
+    for edge in edges:
+        if edge.v0.y == edge.v1.y:
+            # it's horizontal: count the inner length
+            volume += edge.v1.x - edge.v0.x - 1
+        else:
+            # it's vertical
+            volume += 1
+
+            if last_edge and last_edge.v0.y == last_edge.v1.y:
+                # Last edge was a horizontal, figure out whether inside outside flipped...
+                last_y_min = min(last_edge.v0.y, last_edge.v1.y)
+                y_min = min(edge.v0.y, edge.v1.y)
+                if (last_y_min < y and y_min < y) or (
+                    last_y_min > y and y_min > y
+                ):  # U-shaped
+                    inside = not inside
+            else:
+                if inside:
+                    # Space is only inside if last edge was not a horizontal!
+                    volume += edge.v0.x - last_vert.v0.x - 1
+                inside = not inside
+            last_vert = edge
+        last_edge = edge
+
+    print(volume)
+    return volume
+
+
+def prob_1(data: list[str]):
+    instrs = [(int(num), dr) for dr, num, _ in [line.split() for line in data]]
+    vol1 = outline(instrs)
+
+    edges = list(gen_edges(instrs))
+    # print(edges)
+    ymin = min(e.v0.y for e in edges)
+    ymax = max(e.v1.y for e in edges)
+
+    vol2 = 0
+    for y in range(ymin, ymax + 1):
+        vol2 += calc_scanline_volume(
+            y,
+            sorted(
+                (e for e in edges if e.v0.y <= y <= e.v1.y),
+                key=lambda e: e.v0.x + e.v1.x,
+            ),
+        )
+
+    return vol1, vol2
 
 
 # TODO: Forget arrays, hashmaps, etc. We will have to work with the vertices & edges directly.
@@ -85,8 +153,6 @@ def prob_2(data: list[str]):
     for num, dr in instrs:
         loc = (loc[0] + dirs[dr][0] * num, loc[1] + dirs[dr][1] * num)
         coords.append(loc)
-    print(math.gcd(*[x for x, y in coords[1:]]))
-    print(math.gcd(*[y for x, y in coords[1:]]))
     return outline(instrs)
 
 
