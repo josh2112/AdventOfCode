@@ -6,33 +6,68 @@ import time
 # https://adventofcode.com/2023/day/17
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Part to solve, 1 or 2
 PART = 1
 
 
+def neighbors(nx: int, ny: int, xmax: int, ymax: int):
+    if nx > 0:
+        yield (nx - 1, ny)
+    if nx < xmax - 1:
+        yield (nx + 1, ny)
+    if ny > 0:
+        yield (nx, ny - 1)
+    if ny < ymax - 1:
+        yield (nx, ny + 1)
+
+
+# TODO Getting 119 instead of 102 for example input. Pathological example input.ex2.txt looks right?
 def prob_1(data: list[str]):
-    unvisited = [(x, y) for x in range(len(data)) for y in range(len(data[0]))]
-    cost = [[sys.maxsize for _ in range(len(data[0]))] for _ in range(len(data))]
-    cost[0][0] = 0
-    nx, ny = 0, 0
-    for x, y in [
-        (nx - 1, ny - 1),
-        (nx - 1, ny),
-        (nx - 1, ny + 1),
-        (nx + 1, ny - 1),
-        (nx + 1, ny),
-        (nx + 1, ny + 1),
-        (nx, ny - 1),
-        (nx, ny + 1),
-    ]:
-        if x < 0 or y < 0 or x >= range(len(data[0])) or y >= range(len(data)):
-            continue
-        cost[y][x] = min(cost[y][x], data[y][x] + cost[ny][nx])
-    unvisited.remove((nx, ny))
-    if nx == len(data[0]) - 1 and ny == len(data) - 1:
-        break
+    xmax, ymax = len(data[0]), len(data)
+    Q = [(x, y) for x in range(xmax) for y in range(ymax)]
+
+    dist = [[sys.maxsize for _ in range(xmax)] for _ in range(ymax)]
+    dist[0][0] = 0
+    prev = [[(-1, -1) for _ in range(xmax)] for _ in range(ymax)]
+    prev_straight_length = [[((0, 0), 0) for _ in range(xmax)] for _ in range(ymax)]
+
+    while Q:
+        u = sorted(Q, key=lambda q: dist[q[1]][q[0]])[0]
+        Q.remove(u)
+
+        for v in [n for n in neighbors(u[0], u[1], xmax, ymax) if n in Q]:
+            alt = dist[u[1]][u[0]] + int(data[v[1]][v[0]])
+            if alt < dist[v[1]][v[0]]:
+                # First: can we go this way?
+                vec = (v[0] - u[0], v[1] - u[1])
+                str8 = prev_straight_length[u[1]][u[0]]
+                if str8[0] == vec:
+                    # If we've already moved 3 tiles in the same direction, no go
+                    if str8[1] == 3:
+                        continue
+                    prev_straight_length[v[1]][v[0]] = (str8[0], str8[1] + 1)
+                else:
+                    prev_straight_length[v[1]][v[0]] = (vec, 1)
+
+                dist[v[1]][v[0]] = alt
+                prev[v[1]][v[0]] = u
+
+    for line in dist:
+        print(",".join(str(d) for d in line))
+    print()
+
+    track = [(xmax - 1, ymax - 1)]
+    n = prev[ymax - 1][xmax - 1]
+    while n != (0, 0):
+        track.append(n)
+        n = prev[n[1]][n[0]]
+    track.append((0, 0))
+
+    print(list(reversed(track)))
+
+    print(prev_straight_length[ymax - 1][xmax - 1])
 
 
 def prob_2(data: list[str]):
