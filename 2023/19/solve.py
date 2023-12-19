@@ -28,7 +28,8 @@ class Rule:
     value: int
     dest: str
 
-    def do(self, part: Part):
+    # Checks the appropriate part value against this rule
+    def matches(self, part: Part):
         return (
             part.vals[self.var] < self.value
             if self.op == "<"
@@ -38,9 +39,7 @@ class Rule:
     def __repr__(self) -> str:
         return f"{self.var} {self.op} {self.value} : {self.dest}"
 
-    def inverse(self):
-        return Rule(self.var, "<=" if self.op == ">" else ">=", self.value, "")
-
+    # Convert the rule to a range. e.g. a > 4 with range(0,10) => range(5,10)
     def to_range(self, rng: range):
         if self.op == "<":
             return range(rng.start, self.value)
@@ -56,9 +55,6 @@ class Workflow:
     name: str
     rules: list[Rule]
     fallback: str
-
-    def do(self, part: Part):
-        return next((r.dest for r in self.rules if r.do(part)), self.fallback)
 
     @staticmethod
     def parse(line: str):
@@ -79,12 +75,7 @@ def parse(data: list[str]) -> tuple[dict[str, Workflow], list[Part]]:
     ]
 
 
-@dataclass
-class Range:
-    var: str
-    range: range
-
-
+# Intersects 2 ranges, e.g. range(0,5) & range(3,9) => range(3,5)
 def range_intersect(x: range, y: range) -> range:
     return range(max(x[0], y[0]), min(x[-1], y[-1]) + 1)
 
@@ -95,6 +86,8 @@ class PathsToA:
         self.ranges: list[dict[str, range]] = []
         self.workflows = workflows
 
+    # Starting with the "in" workflow, finds all the series of rules to follow that will
+    # get us to "A".
     def build_paths(self):
         self._build_path(self.workflows["in"], [])
 
@@ -104,12 +97,14 @@ class PathsToA:
                 self.paths.append(path + [r])
             elif r.dest != "R":
                 self._build_path(self.workflows[r.dest], path + [r])
-            path = path + [r.inverse()]
+            # invert the rule...
+            path = path + [Rule(r.var, "<=" if r.op == ">" else ">=", r.value, "")]
         if wf.fallback == "A":
             self.paths.append(path)
         elif wf.fallback != "R":
             self._build_path(self.workflows[wf.fallback], path)
 
+    # Given a range, figures out the valid ranges for each variable for each path.
     def build_ranges(self, rng: range):
         for p in self.paths:
             ranges: dict[str, range] = {}
@@ -128,7 +123,8 @@ def prob_1(data: list[str]):
         wf = "in"
         while wf not in ("A", "R"):
             wf = next(
-                (r.dest for r in workflows[wf].rules if r.do(p)), workflows[wf].fallback
+                (r.dest for r in workflows[wf].rules if r.matches(p)),
+                workflows[wf].fallback,
             )
         if wf == "A":
             accepted.append(p)
@@ -139,11 +135,10 @@ def prob_2(data: list[str]):
     workflows, _ = parse(data)
     builder = PathsToA(workflows)
 
-    builder.build_paths()
-    # print("\n".join(str(p) for p in builder.paths))
-
     rng = range(1, 10 + 1) if ".ex2." in INPUT else range(1, 4000 + 1)
 
+    builder.build_paths()
+    # print("\n".join(str(p) for p in builder.paths))
     builder.build_ranges(rng)
     # print("\n".join(str(r) for r in builder.ranges))
 
