@@ -1,0 +1,32 @@
+
+in{s<3:px,a<2:qqz,A}
+qqz{x>8:A,R}
+px{a>6:R,A}
+
+range [1...10 (incl)]
+
+for A:
+ s < 3
+        && a <= 6
+ s >= 3 
+        && a < 2
+                 && x > 8
+        && a >= 2
+
+
+-------------------------
+
+in{s<3:px,a<2:qqz,A}
+qqz{x>8:A,R}
+px{a>6:yy,A}
+yy{a>4:A,R}
+
+range [1...10 (incl)]
+
+for A:
+ s < 3
+        && a <= 6
+ s >= 3 
+        && a < 2
+                 && x > 8
+        && a >= 2

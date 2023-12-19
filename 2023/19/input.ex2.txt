@@ -1,0 +1,5 @@
+in{s<3:px,a<2:qqz,A}
+qqz{x>8:A,R}
+px{a>6:yy,A}
+yy{s<2:A,R}
+

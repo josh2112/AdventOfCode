@@ -20,7 +20,7 @@ def prob_2(data: list[str]):
 
 
 def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
