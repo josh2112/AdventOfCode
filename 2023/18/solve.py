@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import functools
 from dataclasses import dataclass
 
 # https://adventofcode.com/2023/day/18
@@ -9,10 +10,7 @@ from dataclasses import dataclass
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
-
-dirs = {"R": (1, 0), "U": (0, -1), "D": (0, 1), "L": (-1, 0)}
-dirs_ordered = ["R", "D", "L", "U"]
+PART = 2
 
 
 @dataclass(frozen=True)
@@ -27,52 +25,8 @@ class Edge:
     v1: Point
 
 
-def flood_fill(border: set[tuple[int, int]], x: int, y: int):
-    stack: set[tuple[int, int]] = set([(x, y)])
-    while stack:
-        n = stack.pop()
-        border.add(n)
-        for n1 in (
-            (n[0] - 1, n[1]),
-            (n[0] + 1, n[1]),
-            (n[0], n[1] - 1),
-            (n[0], n[1] + 1),
-        ):
-            if n1 not in border:
-                stack.add(n1)
-
-
-def outline(instrs: list[tuple[int, str]]):
-    loc = (0, 0)
-    cubes: set[tuple[int, int]] = set([loc])
-    i = 0
-    coords = []
-    for num, dr in instrs:
-        vec = dirs[dr]
-        for _ in range(int(num)):
-            loc = (loc[0] + vec[0], loc[1] + vec[1])
-            cubes.add(loc)
-        coords.append(loc)
-        i += 1
-        # print(f"{i}/{len(instrs)}")
-
-    with open(f"tmp-part{PART}.svg", "w") as f:
-        f.write('<svg><path d="')
-        f.write("M0 0 " + " ".join(f"L{c[0]} {c[1]}" for c in coords) + " Z")
-        f.write('"/></svg>')
-
-    for y in range(min(y for _, y in cubes), max(y for _, y in cubes) + 1):
-        coords = [
-            x for x, _ in sorted((c for c in cubes if c[1] == y), key=lambda c: c[0])
-        ]
-        if len(coords) > 1 and coords[1] - coords[0] > 1:
-            # We found a good inside coordinate!
-            flood_fill(cubes, coords[0] + 1, y)
-            break
-    return len(cubes)
-
-
 def gen_edges(instrs: list[tuple[int, str]]):
+    dirs = {"R": (1, 0), "U": (0, -1), "D": (0, 1), "L": (-1, 0)}
     loc = (0, 0)
     loc_prev = loc
     for num, dr in instrs:
@@ -84,52 +38,62 @@ def gen_edges(instrs: list[tuple[int, str]]):
         loc_prev = loc
 
 
-# TODO: Still doesn't work for scanline 12 of input.txt part 1...
+# TODO: Think about how we can memoize. Obviously the scanline number can't be a dependency!
+# This can't be memoized because it depends on y. But y is only necessary if there are
+# horizontal edges.
 def calc_scanline_volume(y: int, edges: list[Edge]) -> int:
     volume = 0
     last_vert = None
     last_edge = None
     inside = False
+
     for edge in edges:
+        # print("----------------------")
+
         if edge.v0.y == edge.v1.y:
-            # it's horizontal: count the inner length
+            # it's horizontal: add the length (excluding ends)
             volume += edge.v1.x - edge.v0.x - 1
+            # print(f"Horizontal edge -- adding {edge.v1.x - edge.v0.x - 1}")
         else:
             # it's vertical
             volume += 1
+            # print(f"Vertical edge -- adding 1")
 
             if last_edge and last_edge.v0.y == last_edge.v1.y:
-                # Last edge was a horizontal, figure out whether inside outside flipped...
-                last_y_min = min(last_edge.v0.y, last_edge.v1.y)
-                y_min = min(edge.v0.y, edge.v1.y)
-                if (last_y_min < y and y_min < y) or (
-                    last_y_min > y and y_min > y
-                ):  # U-shaped
+                # Last edge was a horizontal, figure out whether inside/outside flipped...
+                if (
+                    min(last_vert.v0.y, last_vert.v1.y) < y
+                    and min(edge.v0.y, edge.v1.y) < y
+                ) or (
+                    max(last_vert.v0.y, last_vert.v1.y) > y
+                    and max(edge.v0.y, edge.v1.y) > y
+                ):  # U-shaped (or inverse-U)
                     inside = not inside
+                    # print(
+                    #    f"It's U (or inverse U) shaped... now {'inside' if inside else 'outside'}"
+                    # )
+
+                # else:
+                # print(f"It's N-shaped... now {'inside' if inside else 'outside'}")
+
             else:
                 if inside:
-                    # Space is only inside if last edge was not a horizontal!
-                    volume += edge.v0.x - last_vert.v0.x - 1
+                    volume += edge.v0.x - last_edge.v0.x - 1
                 inside = not inside
             last_vert = edge
         last_edge = edge
 
-    print(volume)
     return volume
 
 
-def prob_1(data: list[str]):
-    instrs = [(int(num), dr) for dr, num, _ in [line.split() for line in data]]
-    vol1 = outline(instrs)
-
+def calc_volume(instrs: list[tuple[int, str]]) -> int:
     edges = list(gen_edges(instrs))
-    # print(edges)
     ymin = min(e.v0.y for e in edges)
     ymax = max(e.v1.y for e in edges)
 
-    vol2 = 0
+    volume = 0
     for y in range(ymin, ymax + 1):
-        vol2 += calc_scanline_volume(
+        volume += calc_scanline_volume(
             y,
             sorted(
                 (e for e in edges if e.v0.y <= y <= e.v1.y),
@@ -137,23 +101,23 @@ def prob_1(data: list[str]):
             ),
         )
 
-    return vol1, vol2
+    return volume
 
 
-# TODO: Forget arrays, hashmaps, etc. We will have to work with the vertices & edges directly.
-# For every scanline (y), determine the edges that go through that scanline, and do standard
-# scanline fill.
+def prob_1(data: list[str]):
+    return calc_volume(
+        [(int(num), dr) for dr, num, _ in [line.split() for line in data]]
+    )
+
+
 def prob_2(data: list[str]):
-    instrs = [
-        (int(color[2:7], 16), dirs_ordered[int(color[7])])
-        for _, _, color in [line.split() for line in data]
-    ]
-    loc = (0, 0)
-    coords = [loc]
-    for num, dr in instrs:
-        loc = (loc[0] + dirs[dr][0] * num, loc[1] + dirs[dr][1] * num)
-        coords.append(loc)
-    return outline(instrs)
+    dirs_ordered = ["R", "D", "L", "U"]
+    return calc_volume(
+        [
+            (int(color[2:7], 16), dirs_ordered[int(color[7])])
+            for _, _, color in [line.split() for line in data]
+        ]
+    )
 
 
 def main():
