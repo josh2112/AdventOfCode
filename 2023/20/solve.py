@@ -10,7 +10,7 @@ import time
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 
 @dataclasses.dataclass
@@ -31,16 +31,12 @@ class Module:
         return Module(name, [x[0] for x in m[1:]], symbol)
 
 
-RX_TRIGGERED = False
-
-
 def propagate(src: Module, pulse: bool, modules: dict[str, Module]):
     outputs = []
     for m in [modules[m] for m in src.targets]:
         # print(f"{src.name} -> {'H' if pulse else 'L'} -> {m.name}")
         if m.name == "rx" and not pulse:
-            global RX_TRIGGERED
-            RX_TRIGGERED = True
+            pass
         if m.symbol == "%":
             if not pulse:
                 m.on = not m.on
@@ -95,23 +91,46 @@ def prob_1(data: list[str]):
     modules = parse_modules(data)
     pulses_lo, pulses_hi = 0, 0
     for i in range(1000):
-        ffstate, plo, phi = run_network(i, modules)
+        _, plo, phi = run_network(i, modules)
         pulses_lo += plo
         pulses_hi += phi
 
     return pulses_lo * pulses_hi
 
+@dataclasses.dataclass
+class State:
+    module: Module
+    pulse_in: bool
+
 
 def prob_2(data: list[str]):
-    global RX_TRIGGERED
-    RX_TRIGGERED = False
     modules = parse_modules(data)
+
+    # Find the master target (module with no outputs)
+    master_target = next(m for m in modules.values() if not m.targets)
+
+    # Work backward until we find all the flip-flops (and their states) which will
+    # send this module a low pulse
+    states = [State(master_target, False)]
+    
+    while any( s for s in states if s.module.symbol != "%"):
+        # For each module that's not a flip-flop...
+        for state in [state for state in states if state.module.symbol != "%"]:
+            # Find the modules that output to it
+            inputs = [m for m in modules.values() if state.module.name in m.targets]
+            # For each of those, figure out what its input has to be to cause the desired
+            # output (state.input)
+            for m in inputs:
+                if m.symbol == "&":
+                    # Inputs must be all high
+                    pass
+            states.remove( state )
+
+
     num_presses = 0
-    while True:
-        _, _, _ = run_network(num_presses, modules)
-        if RX_TRIGGERED:
-            return num_presses + 1
-    # 754622849 is too low?
+    for i in range(1000):
+        ffstates, _, _ = run_network(num_presses, modules)
+        print("".join(ffstates))
 
 
 def main():
