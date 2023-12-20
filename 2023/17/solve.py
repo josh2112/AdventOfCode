@@ -6,7 +6,7 @@ import time
 # https://adventofcode.com/2023/day/17
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex.txt"
+INPUT = "input.ex2.txt"
 
 # Part to solve, 1 or 2
 PART = 1
@@ -58,8 +58,10 @@ def prob_1(data: list[str]):
         print(",".join(str(d) for d in line))
     print()
 
-    track = [(xmax - 1, ymax - 1)]
-    n = prev[ymax - 1][xmax - 1]
+    DEST = (4, 1)
+
+    track = [DEST]
+    n = prev[DEST[1]][DEST[0]]
     while n != (0, 0):
         track.append(n)
         n = prev[n[1]][n[0]]
