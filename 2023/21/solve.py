@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import defaultdict
 import functools
 import dataclasses
 import time
@@ -8,7 +9,7 @@ from PIL import Image
 # https://adventofcode.com/2023/day/21
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Part to solve, 1 or 2
 PART = 2
@@ -34,7 +35,7 @@ class Garden:
         return Garden(len(data[0]), len(data), frozenset(rocks), start)
 
     @functools.cache
-    def neighbors(self, u: tuple[int, int], bounds_check: bool = False):
+    def neighbors_1(self, u: tuple[int, int]):
         coords = set()
         for v in (
             (u[0] - 1, u[1]),
@@ -43,52 +44,53 @@ class Garden:
             (u[0], u[1] + 1),
         ):
             if (
-                not bounds_check
-                or (v[0] >= 0 and v[0] < self.xmax and v[1] >= 0 and v[1] < self.ymax)
-            ) and (v[0] % self.xmax, v[1] % self.ymax) not in self.rocks:
+                v[0] >= 0
+                and v[0] < self.xmax
+                and v[1] >= 0
+                and v[1] < self.ymax
+                and v not in self.rocks
+            ):
                 coords.add(v)
         return coords
 
+    @functools.cache
+    def neighbors_2(self, u: tuple[int, int]):
+        coords = defaultdict(set)
+        for v in (
+            (u[0] - 1, u[1]),
+            (u[0], u[1] - 1),
+            (u[0] + 1, u[1]),
+            (u[0], u[1] + 1),
+        ):
+            vnorm = (v[0] % self.xmax, v[1] % self.ymax)
+            if vnorm not in self.rocks:
+                coords[(v[0] // self.xmax, v[1] // self.ymax)].add(vnorm)
+        return coords
 
-@dataclasses.dataclass
-class GIFBuilder:
-    g: Garden
-    path: str
-    imgs = []
 
-    def add_img(self, coords: set[tuple[int, int]]):
-        img = Image.new(mode="RGB", size=(self.g.xmax, self.g.ymax))
-        for rock in self.g.rocks:
-            img.putpixel(rock, (128, 128, 128))
-        for coord in coords:
-            img.putpixel(coord, (0, 255, 85))
-
-        self.imgs.append(img)
-
-    def save(self, length: float):
-        self.imgs[0].save(
-            self.path,
-            format="GIF",
-            append_images=self.imgs[1:],
-            save_all=True,
-            duration=length,
-        )
+def save_img(path: str, g: Garden, coords: set[tuple[int, int]]):
+    img = Image.new(mode="RGB", size=(g.xmax, g.ymax))
+    for rock in g.rocks:
+        img.putpixel(rock, (128, 128, 128))
+    for coord in coords:
+        img.putpixel(coord, (0, 255, 85))
+    img.save(path, format="PNG")
 
 
 def prob_2(data: list[str]):
     g = Garden.parse(data)
-    stack = set([g.start])
-    gifbuilder = GIFBuilder(g, "prob2.gif")
+    stack = defaultdict(set)
+    stack[(0, 0)].add(g.start)
+    last4counts = defaultdict(list)
 
-    for i in range(500):
-        newstack = set()
-        for u in stack:
-            newstack.update(g.neighbors(u, bounds_check=True))
+    for i in range(20):
+        newstack = defaultdict(set)
+        for grid, coords in stack.items():
+            for c in coords:
+                newstack.update(g.neighbors_2(c))
         stack = newstack
-        print(f"{i+1}: {len(stack)}")
-        gifbuilder.add_img(stack)
+        print(f"{i+1}: {[len(stack[g]) for g in stack]}")
 
-    gifbuilder.save(i)
     return len(stack)
 
 
@@ -99,7 +101,7 @@ def prob_1(data: list[str]):
     for i in range(64):
         newstack = set()
         for u in stack:
-            newstack.update(g.neighbors(u, bounds_check=True))
+            newstack.update(g.neighbors_1(u))
         stack = newstack
         print(f"{i+1}: {len(stack)}")
 
