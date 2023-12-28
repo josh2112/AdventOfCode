@@ -120,6 +120,9 @@ def prob_2(data: list[str]):
         fall_cnt[b] = fallers
 
     # 100909 is too high...
+    for k, v in fall_cnt.items():
+        print(f"{k}: {len(v)}")
+
     return sum(len(f) for f in fall_cnt.values())
 
 

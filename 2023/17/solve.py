@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
 import time
+import dataclasses
+from queue import PriorityQueue
 
 # https://adventofcode.com/2023/day/17
 
@@ -12,64 +13,102 @@ INPUT = "input.ex2.txt"
 PART = 1
 
 
-def neighbors(nx: int, ny: int, xmax: int, ymax: int):
-    if nx > 0:
-        yield (nx - 1, ny)
-    if nx < xmax - 1:
-        yield (nx + 1, ny)
-    if ny > 0:
-        yield (nx, ny - 1)
-    if ny < ymax - 1:
-        yield (nx, ny + 1)
+def neighbors(pos: tuple[int, int], xmax: int, ymax: int):
+    if pos[0] > 0:
+        yield (pos[0] - 1, pos[1])
+    if pos[0] < xmax - 1:
+        yield (pos[0] + 1, pos[1])
+    if pos[1] > 0:
+        yield (pos[0], pos[1] - 1)
+    if pos[1] < ymax - 1:
+        yield (pos[0], pos[1] + 1)
 
 
-# TODO Getting 119 instead of 102 for example input. Pathological example input.ex2.txt looks right?
+def bg(r=None, g=None, b=None):
+    return "\u001b[0m" if not r and not g and not b else f"\u001b[48;2;{r};{g};{b}m"
+
+
+@dataclasses.dataclass
+class State:
+    pos: tuple[int, int]
+    vec: tuple[int, int]
+    length: int
+
+    def __eq__(self, __value: object) -> bool:
+        if isinstance(__value, State):
+            return (
+                self.pos == __value.pos
+                and self.vec == __value.vec
+                and self.length == __value.length
+            )
+        return False
+
+
+@dataclasses.dataclass
+class TravelState:
+    cost: int
+    travel: State
+
+    def __lt__(self, other):
+        return self.cost < other.cost
+
+
 def prob_1(data: list[str]):
     xmax, ymax = len(data[0]), len(data)
-    Q = [(x, y) for x in range(xmax) for y in range(ymax)]
+    start, goal = (0, 0), (xmax - 1, ymax - 1)
+    frontier = PriorityQueue()
+    frontier.put(TravelState(0, State(start, (0, 0), 0)))
 
-    dist = [[sys.maxsize for _ in range(xmax)] for _ in range(ymax)]
-    dist[0][0] = 0
-    prev = [[(-1, -1) for _ in range(xmax)] for _ in range(ymax)]
-    prev_straight_length = [[((0, 0), 0) for _ in range(xmax)] for _ in range(ymax)]
+    visited: set[State] = set()
 
-    while Q:
-        u = sorted(Q, key=lambda q: dist[q[1]][q[0]])[0]
-        Q.remove(u)
+    cost_so_far: dict[tuple[int, int], int] = {start: 0}
+    came_from: dict[tuple[int, int], tuple[int, int]] = {start: start}
 
-        for v in [n for n in neighbors(u[0], u[1], xmax, ymax) if n in Q]:
-            alt = dist[u[1]][u[0]] + int(data[v[1]][v[0]])
-            if alt < dist[v[1]][v[0]]:
+    while frontier:
+        cur: TravelState = frontier.get()
+
+        if cur.travel.pos == goal:
+            break
+
+        if cur.travel in visited:
+            continue
+
+        visited.add(cur.travel)
+
+        for nxt in neighbors(cur.pos, xmax, ymax):
+            alt = cost_so_far[cur.pos] + int(data[nxt[1]][nxt[0]])
+            if nxt not in cost_so_far or alt < cost_so_far[nxt]:
                 # First: can we go this way?
-                vec = (v[0] - u[0], v[1] - u[1])
-                str8 = prev_straight_length[u[1]][u[0]]
-                if str8[0] == vec:
+                nxt_vec = (nxt[0] - cur.pos[0], nxt[1] - cur.pos[1])
+                nxt_length = 0
+                if cur.vec == nxt_vec:
                     # If we've already moved 3 tiles in the same direction, no go
-                    if str8[1] == 3:
+                    if cur.length == 2:
                         continue
-                    prev_straight_length[v[1]][v[0]] = (str8[0], str8[1] + 1)
+                    nxt_length = cur.length + 1
                 else:
-                    prev_straight_length[v[1]][v[0]] = (vec, 1)
+                    nxt_length = 1
 
-                dist[v[1]][v[0]] = alt
-                prev[v[1]][v[0]] = u
+                cost_so_far[nxt] = alt
+                frontier.put(TravelState(alt, nxt, nxt_vec, nxt_length))
+                came_from[nxt] = cur.pos
 
-    for line in dist:
-        print(",".join(str(d) for d in line))
-    print()
-
-    DEST = (4, 1)
-
-    track = [DEST]
-    n = prev[DEST[1]][DEST[0]]
-    while n != (0, 0):
+    track = []
+    n = goal
+    while n != start:
         track.append(n)
-        n = prev[n[1]][n[0]]
-    track.append((0, 0))
+        n = came_from[n]
+    track.append(start)
 
-    print(list(reversed(track)))
+    for y in range(ymax):
+        print(
+            "".join(
+                f"{bg( 0,96,0)}{c}{bg()}" if (x, y) in track else c
+                for x, c in enumerate(data[y])
+            )
+        )
 
-    print(prev_straight_length[ymax - 1][xmax - 1])
+    return cost_so_far[goal]
 
 
 def prob_2(data: list[str]):
