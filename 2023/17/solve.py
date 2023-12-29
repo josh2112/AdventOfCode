@@ -3,14 +3,15 @@
 import time
 import dataclasses
 from queue import PriorityQueue
+from typing import Optional
 
 # https://adventofcode.com/2023/day/17
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex2.txt"
+INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 
 def neighbors(pos: tuple[int, int], xmax: int, ymax: int):
@@ -28,79 +29,32 @@ def bg(r=None, g=None, b=None):
     return "\u001b[0m" if not r and not g and not b else f"\u001b[48;2;{r};{g};{b}m"
 
 
-@dataclasses.dataclass
-class State:
+@dataclasses.dataclass(frozen=True)
+class TravelState:
     pos: tuple[int, int]
     vec: tuple[int, int]
     length: int
 
-    def __eq__(self, __value: object) -> bool:
-        if isinstance(__value, State):
-            return (
-                self.pos == __value.pos
-                and self.vec == __value.vec
-                and self.length == __value.length
-            )
-        return False
 
-
-@dataclasses.dataclass
-class TravelState:
+@dataclasses.dataclass(frozen=True)
+class State:
     cost: int
-    travel: State
+    travel: TravelState
+    prev: Optional["State"] = None
 
-    def __lt__(self, other):
+    def __lt__(self, other: "State"):
         return self.cost < other.cost
 
 
-def prob_1(data: list[str]):
-    xmax, ymax = len(data[0]), len(data)
-    start, goal = (0, 0), (xmax - 1, ymax - 1)
-    frontier = PriorityQueue()
-    frontier.put(TravelState(0, State(start, (0, 0), 0)))
-
-    visited: set[State] = set()
-
-    cost_so_far: dict[tuple[int, int], int] = {start: 0}
-    came_from: dict[tuple[int, int], tuple[int, int]] = {start: start}
-
-    while frontier:
-        cur: TravelState = frontier.get()
-
-        if cur.travel.pos == goal:
-            break
-
-        if cur.travel in visited:
-            continue
-
-        visited.add(cur.travel)
-
-        for nxt in neighbors(cur.pos, xmax, ymax):
-            alt = cost_so_far[cur.pos] + int(data[nxt[1]][nxt[0]])
-            if nxt not in cost_so_far or alt < cost_so_far[nxt]:
-                # First: can we go this way?
-                nxt_vec = (nxt[0] - cur.pos[0], nxt[1] - cur.pos[1])
-                nxt_length = 0
-                if cur.vec == nxt_vec:
-                    # If we've already moved 3 tiles in the same direction, no go
-                    if cur.length == 2:
-                        continue
-                    nxt_length = cur.length + 1
-                else:
-                    nxt_length = 1
-
-                cost_so_far[nxt] = alt
-                frontier.put(TravelState(alt, nxt, nxt_vec, nxt_length))
-                came_from[nxt] = cur.pos
-
+def print_path(data: list[str], goal_state: State, start: tuple[int, int]):
     track = []
-    n = goal
-    while n != start:
-        track.append(n)
-        n = came_from[n]
+    s = goal_state
+    while s:
+        track.append(s.travel.pos)
+        s = s.prev
     track.append(start)
 
-    for y in range(ymax):
+    for y in range(len(data)):
         print(
             "".join(
                 f"{bg( 0,96,0)}{c}{bg()}" if (x, y) in track else c
@@ -108,11 +62,63 @@ def prob_1(data: list[str]):
             )
         )
 
-    return cost_so_far[goal]
+
+def prob_1(data: list[str]):
+    return solve(data, 1, 3)
 
 
 def prob_2(data: list[str]):
-    print(data)
+    return solve(data, 4, 10)
+
+
+def solve(data: list[str], min_straight_steps: int, max_straight_steps: int):
+    xmax, ymax = len(data[0]), len(data)
+    start, goal = (0, 0), (xmax - 1, ymax - 1)
+    frontier = PriorityQueue()
+
+    frontier.put(State(0, TravelState(start, (1, 0), 1)))
+    frontier.put(State(0, TravelState(start, (0, 1), 1)))
+
+    visited: set[TravelState] = set()
+
+    goal_state = None
+
+    while frontier:
+        cur: State = frontier.get()
+
+        if cur.travel.pos == goal and cur.travel.length >= min_straight_steps:
+            goal_state = cur
+            break
+
+        if cur.travel in visited:
+            continue
+
+        visited.add(cur.travel)
+
+        for nxt in neighbors(cur.travel.pos, xmax, ymax):
+            nxt_vec = (nxt[0] - cur.travel.pos[0], nxt[1] - cur.travel.pos[1])
+
+            if nxt_vec != (-cur.travel.vec[0], -cur.travel.vec[1]) and (
+                (nxt_vec != cur.travel.vec and cur.travel.length >= min_straight_steps)
+                or (
+                    nxt_vec == cur.travel.vec and cur.travel.length < max_straight_steps
+                )
+            ):
+                frontier.put(
+                    State(
+                        cur.cost + int(data[nxt[1]][nxt[0]]),
+                        TravelState(
+                            nxt,
+                            nxt_vec,
+                            cur.travel.length + 1 if nxt_vec == cur.travel.vec else 1,
+                        ),
+                        cur,
+                    )
+                )
+
+    if goal_state:
+        # print_path(data, goal_state, start)
+        return goal_state.cost
 
 
 def main():
