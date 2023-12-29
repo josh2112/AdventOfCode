@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import time
-import dataclasses
-from queue import PriorityQueue
+from dataclasses import dataclass, field
+from heapq import heappush, heappop
 from typing import Optional
 
 # https://adventofcode.com/2023/day/17
@@ -14,36 +14,18 @@ INPUT = "input.txt"
 PART = 2
 
 
-def neighbors(pos: tuple[int, int], xmax: int, ymax: int):
-    if pos[0] > 0:
-        yield (pos[0] - 1, pos[1])
-    if pos[0] < xmax - 1:
-        yield (pos[0] + 1, pos[1])
-    if pos[1] > 0:
-        yield (pos[0], pos[1] - 1)
-    if pos[1] < ymax - 1:
-        yield (pos[0], pos[1] + 1)
-
-
-def bg(r=None, g=None, b=None):
-    return "\u001b[0m" if not r and not g and not b else f"\u001b[48;2;{r};{g};{b}m"
-
-
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class TravelState:
     pos: tuple[int, int]
-    vec: tuple[int, int]
+    vec: int
     length: int
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class State:
     cost: int
-    travel: TravelState
-    prev: Optional["State"] = None
-
-    def __lt__(self, other: "State"):
-        return self.cost < other.cost
+    travel: TravelState = field(compare=False)
+    prev: Optional["State"] = field(default=None, compare=False)
 
 
 def print_path(data: list[str], goal_state: State, start: tuple[int, int]):
@@ -54,6 +36,9 @@ def print_path(data: list[str], goal_state: State, start: tuple[int, int]):
         s = s.prev
     track.append(start)
 
+    def bg(r=None, g=None, b=None):
+        return "\u001b[0m" if not r and not g and not b else f"\u001b[48;2;{r};{g};{b}m"
+
     for y in range(len(data)):
         print(
             "".join(
@@ -61,6 +46,10 @@ def print_path(data: list[str], goal_state: State, start: tuple[int, int]):
                 for x, c in enumerate(data[y])
             )
         )
+
+
+UP, RIGHT, DOWN, LEFT = 0, 1, 2, 3
+VEC = ((0, -1), (1, 0), (0, 1), (-1, 0))
 
 
 def prob_1(data: list[str]):
@@ -74,17 +63,18 @@ def prob_2(data: list[str]):
 def solve(data: list[str], min_straight_steps: int, max_straight_steps: int):
     xmax, ymax = len(data[0]), len(data)
     start, goal = (0, 0), (xmax - 1, ymax - 1)
-    frontier = PriorityQueue()
 
-    frontier.put(State(0, TravelState(start, (1, 0), 1)))
-    frontier.put(State(0, TravelState(start, (0, 1), 1)))
+    frontier: list[State] = [
+        State(0, TravelState(start, RIGHT, 1)),
+        State(0, TravelState(start, DOWN, 1)),
+    ]
 
     visited: set[TravelState] = set()
 
     goal_state = None
 
     while frontier:
-        cur: State = frontier.get()
+        cur: State = heappop(frontier)
 
         if cur.travel.pos == goal and cur.travel.length >= min_straight_steps:
             goal_state = cur
@@ -95,25 +85,34 @@ def solve(data: list[str], min_straight_steps: int, max_straight_steps: int):
 
         visited.add(cur.travel)
 
-        for nxt in neighbors(cur.travel.pos, xmax, ymax):
-            nxt_vec = (nxt[0] - cur.travel.pos[0], nxt[1] - cur.travel.pos[1])
+        # Can we turn?
+        if min_straight_steps <= cur.travel.length <= max_straight_steps:
+            for d in (-1, 1):
+                nxt_dir = (cur.travel.vec + d) % len(VEC)
+                vec = VEC[nxt_dir]
+                nxt = (cur.travel.pos[0] + vec[0], cur.travel.pos[1] + vec[1])
+                if 0 <= nxt[0] < xmax and 0 <= nxt[1] < ymax:
+                    heappush(
+                        frontier,
+                        State(
+                            cur.cost + int(data[nxt[1]][nxt[0]]),
+                            TravelState(nxt, nxt_dir, 1),
+                            cur,
+                        ),
+                    )
 
-            if nxt_vec != (-cur.travel.vec[0], -cur.travel.vec[1]) and (
-                (nxt_vec != cur.travel.vec and cur.travel.length >= min_straight_steps)
-                or (
-                    nxt_vec == cur.travel.vec and cur.travel.length < max_straight_steps
-                )
-            ):
-                frontier.put(
+        # Can we go straight?
+        if cur.travel.length < max_straight_steps:
+            vec = VEC[cur.travel.vec]
+            nxt = (cur.travel.pos[0] + vec[0], cur.travel.pos[1] + vec[1])
+            if 0 <= nxt[0] < xmax and 0 <= nxt[1] < ymax:
+                heappush(
+                    frontier,
                     State(
                         cur.cost + int(data[nxt[1]][nxt[0]]),
-                        TravelState(
-                            nxt,
-                            nxt_vec,
-                            cur.travel.length + 1 if nxt_vec == cur.travel.vec else 1,
-                        ),
+                        TravelState(nxt, cur.travel.vec, cur.travel.length + 1),
                         cur,
-                    )
+                    ),
                 )
 
     if goal_state:
