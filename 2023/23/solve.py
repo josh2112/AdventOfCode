@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
+from dataclasses import dataclass
 import time
+import re
 
 # https://adventofcode.com/2023/day/23
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex2.txt"
 
 # Part to solve, 1 or 2
-PART = 2
+PART = 1
 
 path_found = []
 
@@ -75,7 +77,54 @@ def walk2(path: list[tuple[int, int]], data: list[str], goal: tuple[int, int]):
             return
 
 
+@dataclass(frozen=True)
+class State:
+    pos: tuple[int, int]
+    vec: int
+    prev: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class Edge:
+    p1: tuple[int, int]
+    p2: tuple[int, int]
+
+
+# Figure out the edges. Bidirectional edges will be represented twice.
+def build_graph(data: list[str]):
+    edges = []
+    for y, line in enumerate(data):
+        for m in re.finditer(r"([\.<^>v]+)", line):
+            span = (m.span(1)[0], m.span(1)[1] - 1)
+            if span[0] == span[1]:
+                continue
+            txt = m.group(1)
+            fwd = ">" in txt or "v" in txt
+            rev = "<" in txt or "^" in txt
+            if fwd or not rev:
+                edges.append(((span[0], y), (span[1], y)))
+            if rev or not fwd:
+                edges.append(((span[1], y), (span[0], y)))
+
+    for x, line in enumerate(list(map(list, zip(*data)))):
+        for m in re.finditer(r"([\.<^>v]+)", "".join(line)):
+            span = (m.span(1)[0], m.span(1)[1] - 1)
+            if span[0] == span[1]:
+                continue
+            txt = m.group(1)
+            fwd = ">" in txt or "v" in txt
+            rev = "<" in txt or "^" in txt
+            if fwd or not rev:
+                edges.append(((x, span[0]), (x, span[1])))
+            if rev or not fwd:
+                edges.append(((x, span[1]), (x, span[0])))
+
+    return edges
+
+
 def prob_1(data: list[str]):
+    build_graph(data)
+
     global paths_found
     path = [(1, 0), (1, 1)]
     goal = (len(data[0]) - 2, len(data) - 1)
