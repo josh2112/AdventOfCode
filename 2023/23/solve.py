@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+from collections import defaultdict
 from dataclasses import dataclass
+from enum import IntEnum
 import time
 import re
 
@@ -10,7 +12,7 @@ import re
 INPUT = "input.ex2.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 path_found = []
 
@@ -77,54 +79,111 @@ def walk2(path: list[tuple[int, int]], data: list[str], goal: tuple[int, int]):
             return
 
 
-@dataclass(frozen=True)
-class State:
-    pos: tuple[int, int]
-    vec: int
-    prev: tuple[int, int]
+class Direction(IntEnum):
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
+
+    __vectors = ((0, -1), (1, 0), (0, 1), (-1, 0))
+
+    def turn(self, cw_count: int) -> "Direction":
+        return self.__class__((self.value + cw_count) % len(Direction.__members__))
+
+    @property
+    def vector(self) -> tuple[int, int]:
+        return self.__class__.__vectors[self.value]
+
+    def advance(self, coord: tuple[int, int], count: int = 1) -> tuple[int, int]:
+        vec = self.vector
+        return coord[0] + vec[0] * count, coord[1] + vec[1] * count
+
+    @classmethod
+    def from_line(cls, p1: tuple[int, int], p2: tuple[int, int]):
+        vec = p2[0] - p1[0], p2[1] - p1[1]
+        if mag := max(abs(vec[0]), abs(vec[1])):
+            vec = vec[0] / mag, vec[1] / mag
+        return Direction(cls.__vectors.index(vec))
 
 
-@dataclass(frozen=True)
-class Edge:
-    p1: tuple[int, int]
-    p2: tuple[int, int]
-
-
-# Figure out the edges. Bidirectional edges will be represented twice.
 def build_graph(data: list[str]):
-    edges = []
-    for y, line in enumerate(data):
-        for m in re.finditer(r"([\.<^>v]+)", line):
-            span = (m.span(1)[0], m.span(1)[1] - 1)
-            if span[0] == span[1]:
-                continue
-            txt = m.group(1)
-            fwd = ">" in txt or "v" in txt
-            rev = "<" in txt or "^" in txt
-            if fwd or not rev:
-                edges.append(((span[0], y), (span[1], y)))
-            if rev or not fwd:
-                edges.append(((span[1], y), (span[0], y)))
+    maze = {(x, y): data[y][x] for y in range(len(data)) for x in range(len(data[y]))}
 
-    for x, line in enumerate(list(map(list, zip(*data)))):
-        for m in re.finditer(r"([\.<^>v]+)", "".join(line)):
-            span = (m.span(1)[0], m.span(1)[1] - 1)
-            if span[0] == span[1]:
-                continue
-            txt = m.group(1)
-            fwd = ">" in txt or "v" in txt
-            rev = "<" in txt or "^" in txt
-            if fwd or not rev:
-                edges.append(((x, span[0]), (x, span[1])))
-            if rev or not fwd:
-                edges.append(((x, span[1]), (x, span[0])))
+    # position -> set of neighbor node positions
+    nodes: dict[tuple[int, int], set[tuple[int, int]]] = defaultdict(set)
 
-    return edges
+    # start, direction, is_bidi
+    Hallway = tuple[tuple[int, int], Direction, bool]
+    # start at (1,0) moving down
+    hallways: list[Hallway] = [((1, 0), Direction.DOWN, True)]
+
+    # TODO: (1,3) should not go to (3,3)
+
+    while hallways:
+        start, direction, is_bidi = hallways.pop(0)
+
+        # Take advantage of the fact that a node can have at most one
+        # neighbor in each direction. If the (start) node has a neighbor
+        # in (direction) already, skip it. For directional nodes, it's a
+        # bit harder: We have to check each node to see if it has (start)
+        # as a neighbor in the opposite direction
+        if next(
+            (n for n in nodes[start] if Direction.from_line(start, n) == direction),
+            None,
+        ):
+            continue
+
+        pos = start
+
+        while True:
+            # Move forward 1
+            pos = direction.advance(pos)
+
+            if pos not in maze:
+                # We must be at the exit
+                pos_prev = direction.advance(pos, -1)
+                nodes[start].add(pos_prev)
+                nodes[pos_prev].add(start)
+                break
+
+            # Enforce directionality arrow
+            if (arrow := "^>v<".find(maze[pos])) != -1:
+                if arrow == direction:
+                    # We are going in the right way
+                    is_bidi = False
+                if ((arrow + 2) % 4) == direction:
+                    # We are going the wrong way, stop following path
+                    continue
+
+            # Can we turn right and/or left here?
+            dir_right = direction.turn(1)
+            pos_right = dir_right.advance(pos)
+            dir_left = direction.turn(-1)
+            pos_left = dir_left.advance(pos)
+
+            if maze[pos_left] != "#" or (maze[pos_right]) != "#":
+                # Create bidirectional connection
+                nodes[start].add(pos)
+                if is_bidi:
+                    nodes[pos].add(start)
+
+                # Create new hallways left and/or right
+                if maze[pos_left] != "#":
+                    hallways.append((pos, dir_left, True))
+                if maze[pos_right] != "#":
+                    hallways.append((pos, dir_right, True))
+
+                # If we can still go forward, create a new hallway
+                pos_fwd = direction.advance(pos)
+                if maze[pos_fwd] != "#":
+                    hallways.append((pos, direction, True))
+
+                break
+
+    return nodes
 
 
 def prob_1(data: list[str]):
-    build_graph(data)
-
     global paths_found
     path = [(1, 0), (1, 1)]
     goal = (len(data[0]) - 2, len(data) - 1)
@@ -135,6 +194,8 @@ def prob_1(data: list[str]):
 # TODO: Runs way too slow for an answer. Maybe try building a graph containing just the decision
 # points?
 def prob_2(data: list[str]):
+    build_graph(data)
+
     global paths_found
     path = [(1, 0), (1, 1)]
     goal = (len(data[0]) - 2, len(data) - 1)
