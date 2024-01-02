@@ -12,6 +12,15 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Day 23",
+            "type": "python",
+            "request": "launch",
+            "module": "2023.23.solve",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
