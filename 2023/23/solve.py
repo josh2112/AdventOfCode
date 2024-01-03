@@ -98,33 +98,33 @@ def build_graph(data: list[str], ignore_directional: bool) -> Nodes:
     return nodes
 
 
-max_steps = 0
-TIME_START: float
+def walk(nodes: Nodes, initial_path: list[int], goal: int) -> int:
+    time_start = time.perf_counter()
+    max_steps = 0
+    paths: list[list[int]] = [initial_path]
 
+    while paths:
+        path = paths.pop(0)
 
-def walk(path: list[int], nodes: Nodes, goal: int):
-    global max_steps
-    while True:
-        possibilities = []
-        for n in nodes[path[-1]]:
-            if n == goal:
-                path.append(n)
-                steps = sum(nodes[n1][n2] for n1, n2 in pairwise(path))
-                if steps > max_steps:
-                    print(
-                        f"{time.perf_counter()-TIME_START}: Found path of {steps} steps"
-                    )
-                    max_steps = max(steps, max_steps)
-                return
-            if n not in path:
-                possibilities.append(n)
-        if len(possibilities) > 1:
-            for p in possibilities[1:]:
-                walk(path + [p], nodes, goal)
-        if possibilities:
+        while True:
+            possibilities = []
+            for n in nodes[path[-1]]:
+                if n == goal:
+                    steps = sum(nodes[n1][n2] for n1, n2 in pairwise(path + [n]))
+                    if steps > max_steps:
+                        print(
+                            f"{time.perf_counter()-time_start}: Found path of {steps} steps"
+                        )
+                        max_steps = steps
+                elif n not in path:
+                    possibilities.append(n)
+            if not possibilities:
+                break
+            for n in possibilities[1:]:
+                paths.append(path + [n])
             path.append(possibilities[0])
-        if not possibilities:
-            return
+
+    return max_steps
 
 
 def collapse_non_branches_1(nodes: Nodes):
@@ -212,10 +212,7 @@ def longest_path(data: list[str], ignore_directionals: bool):
     penultimate = next(iter(nodes[goal]))
     print(f"* Add {nodes[penultimate][goal]} for last leg!")
 
-    global TIME_START
-    TIME_START = time.perf_counter()
-
-    walk(path, nodes, penultimate)
+    max_steps = walk(nodes, path, penultimate)
     return max_steps + nodes[penultimate][goal]
 
 
