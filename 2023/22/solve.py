@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import dataclasses
 import time
-from PIL import Image
+
+# from PIL import Image
 
 # https://adventofcode.com/2023/day/22
 
@@ -52,7 +52,7 @@ def setup(data: list[str]):
     )
     xmax = max(b.x.stop for b in bricks)
     ymax = max(b.y.stop for b in bricks)
-    zmax = max(b.z.stop for b in bricks)
+    zmax = max(b.z.stop for b in bricks) + 1
 
     base = Brick("_", [0, 0, 0], [xmax - 1, ymax - 1, 0])
 
@@ -78,19 +78,21 @@ def setup(data: list[str]):
                     b.z = range(b.z.start - dz, b.z.stop - dz)
                 break
 
-    # supporters[D] = [B,C] means D is supported by B and C
-    supporters: dict[Brick, list[Brick]] = {}
+    # supporters[C] = [A,B] means C is supported by A and B
+    supporters: dict[Brick, set[Brick]] = {}
 
     # supporting[A] = [B,C] means A supports B and C
-    supporting: dict[Brick, list[Brick]] = {}
+    supporting: dict[Brick, set[Brick]] = {}
 
     for b in bricks:
         # Find all the bricks whose top x/y rect is right below the bottom of this one
-        supporters[b] = [
+        supporters[b] = set(
             br for br in brick_tops[b.z.start - 1] if br.intersect_horiz(b)
-        ]
+        )
         # Find all the bricks whose bottom x/y rect is right above top of this one
-        supporting[b] = [br for br in brick_bottoms[b.z.stop] if br.intersect_horiz(b)]
+        supporting[b] = set(
+            br for br in brick_bottoms[b.z.stop] if br.intersect_horiz(b)
+        )
 
     # Remove a brick if it doesn't support any others or all bricks supported by it are each
     # supported by more than 1 brick
@@ -98,30 +100,33 @@ def setup(data: list[str]):
         b for b in bricks if all(len(supporters[above]) > 1 for above in supporting[b])
     ]
 
-    return bricks, to_be_removed, supporting
+    return bricks, to_be_removed, supporting, supporters
 
 
 def prob_1(data: list[str]):
-    bricks, to_be_removed, _ = setup(data)
+    _, to_be_removed, _, _ = setup(data)
     return len(to_be_removed)
 
 
 def prob_2(data: list[str]):
-    bricks, to_be_removed, supporting = setup(data)
+    bricks, to_be_removed, supporting, supporters = setup(data)
 
     fall_cnt = {}
-    for b in set(bricks) - set(to_be_removed):
+    for a in set(bricks) - set(to_be_removed):
         fallers = set()
-        aboves = supporting[b]
+        aboves = set(b for b in supporting[a] if not supporters[b] - set([a]))
         fallers.update(aboves)
         while aboves:
-            aboves = set(x for a in aboves for x in supporting[a])
+            # For each of these bricks, grab the bricks on top that are only being supported by
+            # bricks that have fallen so far
+            aboves = set(
+                c
+                for b in aboves
+                for c in supporting[b]
+                if not (supporters[c] - fallers)
+            )
             fallers.update(aboves)
-        fall_cnt[b] = fallers
-
-    # 100909 is too high...
-    for k, v in fall_cnt.items():
-        print(f"{k}: {len(v)}")
+        fall_cnt[a] = fallers
 
     return sum(len(f) for f in fall_cnt.values())
 
