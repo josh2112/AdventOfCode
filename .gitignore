@@ -1,5 +1,4 @@
 .env
 .venv/
 input.txt
-*.svg
 __pycache__/

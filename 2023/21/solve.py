@@ -9,10 +9,10 @@ from PIL import Image
 # https://adventofcode.com/2023/day/21
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex.txt"
+INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 2
+PART = 1
 
 
 @dataclasses.dataclass(frozen=True)
@@ -77,23 +77,6 @@ def save_img(path: str, g: Garden, coords: set[tuple[int, int]]):
     img.save(path, format="PNG")
 
 
-def prob_2(data: list[str]):
-    g = Garden.parse(data)
-    stack = defaultdict(set)
-    stack[(0, 0)].add(g.start)
-    last4counts = defaultdict(list)
-
-    for i in range(20):
-        newstack = defaultdict(set)
-        for grid, coords in stack.items():
-            for c in coords:
-                newstack.update(g.neighbors_2(c))
-        stack = newstack
-        print(f"{i+1}: {[len(stack[g]) for g in stack]}")
-
-    return len(stack)
-
-
 def prob_1(data: list[str]):
     g = Garden.parse(data)
     stack = set([g.start])
@@ -104,6 +87,32 @@ def prob_1(data: list[str]):
             newstack.update(g.neighbors_1(u))
         stack = newstack
         print(f"{i+1}: {len(stack)}")
+
+    return len(stack)
+
+
+# So the input grid is 131x131, with the start position at 65x65. This means there are 65 cells
+# on all sides of the input. There are also no rocks in the center row or column, meaning the
+# diamond can grow unobstructed in all 4 directions in the center column.
+#
+# The input step count is 26501365. After 65 to the edge, that leaves 26501300, which is evenly
+# divisible by 131 (result 202300). So the walk extends to each border of the center, then goes out
+# 202300 more 'plots' in all four directions.
+#
+# This also puts the frontier in each 'plot' right in the middle of the big diamond-shaped "valley"
+#
+def prob_2(data: list[str]):
+    g = Garden.parse(data)
+    stack = defaultdict(set)
+    stack[(0, 0)].add(g.start)
+
+    for i in range(20):
+        newstack = defaultdict(set)
+        for grid, coords in stack.items():
+            for c in coords:
+                newstack.update(g.neighbors_2(c))
+        stack = newstack
+        print(f"{i+1}: {[len(stack[g]) for g in stack]}")
 
     return len(stack)
 
