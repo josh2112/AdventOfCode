@@ -2,4 +2,4 @@
 .venv/
 input.txt
 *.svg
-*.pyc
+__pycache__/
