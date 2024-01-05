@@ -18,7 +18,7 @@ class Module:
     name: str
     targets: list[str]
     symbol: str
-    on: bool = False
+    is_on: int = 0
     inputs: dict[str, bool] = dataclasses.field(default_factory=dict)
 
     @staticmethod
@@ -35,25 +35,23 @@ def propagate(src: Module, pulse: bool, modules: dict[str, Module]):
     outputs = []
     for m in [modules[m] for m in src.targets]:
         # print(f"{src.name} -> {'H' if pulse else 'L'} -> {m.name}")
-        if m.name == "rx" and not pulse:
-            pass
         if m.symbol == "%":
             if not pulse:
-                m.on = not m.on
-                output = 1 if m.on else 0
-                outputs.append((m, output))
+                m.is_on = not m.is_on
+                outputs.append((m, m.is_on))
         elif m.symbol == "&":
             m.inputs[src.name] = pulse
-            outputs.append((m, not all(m.inputs.values())))
+            m.is_on = not all(m.inputs.values())
+            outputs.append((m, m.is_on))
         else:
             outputs.append((m, pulse))
     return outputs
 
 
-def run_network(i: int, modules: dict[str, Module]):
+def run_network(i: int, modules: dict[str, Module], button: Module):
     # print(f"---[Run {i+1}]---")
     pulses_lo, pulses_hi = 1, 0
-    outputs = propagate(modules["button"], False, modules)
+    outputs = propagate(button, False, modules)
     while outputs:
         pulses_lo += sum(len(ou[0].targets) for ou in outputs if not ou[1])
         pulses_hi += sum(len(ou[0].targets) for ou in outputs if ou[1])
@@ -67,9 +65,17 @@ def run_network(i: int, modules: dict[str, Module]):
     # print(f"  lo: {pulses_lo}")
     # print(f"  hi: {pulses_hi}")
     # print("------------------")
-    ffstate = ["1" if ff.on else "0" for ff in modules.values() if ff.symbol == "%"]
+    # ffstate = ["1" if ff.on else "0" for ff in modules.values() if ff.symbol == "%"]
     # print(f"run {i+1}: ff = {''.join( ffstate )}, cnts = {pulses_lo}, {pulses_hi}")
-    return ffstate, pulses_lo, pulses_hi
+    return pulses_lo, pulses_hi
+
+
+def fast_run_network(modules: dict[str, Module], button: Module):
+    outputs = propagate(button, False, modules)
+    while outputs:
+        outputs = [
+            x for a in [propagate(op[0], op[1], modules) for op in outputs] for x in a
+        ]
 
 
 def parse_modules(data: list[str]):
@@ -90,47 +96,43 @@ def parse_modules(data: list[str]):
 def prob_1(data: list[str]):
     modules = parse_modules(data)
     pulses_lo, pulses_hi = 0, 0
+    button = modules["button"]
+
     for i in range(1000):
-        _, plo, phi = run_network(i, modules)
+        plo, phi = run_network(i, modules, button)
         pulses_lo += plo
         pulses_hi += phi
 
     return pulses_lo * pulses_hi
 
-@dataclasses.dataclass
-class State:
-    module: Module
-    pulse_in: bool
-
 
 def prob_2(data: list[str]):
     modules = parse_modules(data)
+    button = modules["button"]
 
     # Find the master target (module with no outputs)
     master_target = next(m for m in modules.values() if not m.targets)
 
-    # Work backward until we find all the flip-flops (and their states) which will
-    # send this module a low pulse
-    states = [State(master_target, False)]
-    
-    while any( s for s in states if s.module.symbol != "%"):
-        # For each module that's not a flip-flop...
-        for state in [state for state in states if state.module.symbol != "%"]:
-            # Find the modules that output to it
-            inputs = [m for m in modules.values() if state.module.name in m.targets]
-            # For each of those, figure out what its input has to be to cause the desired
-            # output (state.input)
-            for m in inputs:
-                if m.symbol == "&":
-                    # Inputs must be all high
-                    pass
-            states.remove( state )
+    # This will be rm, which feeds into rx. It's a conjunction, meaning
+    # all its inputs must be high to send out a low.
+    t1 = next(m for m in modules.values() if master_target.name in m.targets)
 
+    # These are the 4 conjunctions that feed into rm. We need all their outputs to be high
+    # which means each must have at least 1 low input
+    t2 = [m for m in modules.values() if t1.name in m.targets]
 
-    num_presses = 0
-    for i in range(1000):
-        ffstates, _, _ = run_network(num_presses, modules)
-        print("".join(ffstates))
+    # These are the 4 conjunctions that feed into the t2 conjunctions. We need all these to be low
+    # so all their inputs must be high
+    t3 = [m for m in modules.values() for t in t2 if t.name in m.targets]
+
+    i = 0
+    while True:
+        i += 1
+        fast_run_network(modules, button)
+        if not i % 100000:
+            print(f"i = {i}")
+        for t in [t for t in t2 if t.is_on]:
+            print(f'i = {i}: {"".join(str(t.is_on) for t in t2)}')
 
 
 def main():

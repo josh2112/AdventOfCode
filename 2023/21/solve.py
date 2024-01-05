@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from collections import defaultdict
 import functools
 import dataclasses
 import time
@@ -145,7 +144,8 @@ def prob_2(data: list[str]):
     )
     m1, m2 = map(count_tiles_in_plot, ((half, 1), (half, 2)))
 
-    print(t, l, r, b, lto, rto, lbo, rbo, lti, rti, lbi, rbi, m1, m2)
+    # t, l, r, b, lto, rto, lbo, rbo, lti, rti, lbi, rbi, m1, m2
+    # 5515 5479 5508 5472 935 909 944 902 6384 6393 6357 6377 7232 7262
 
     half = (26501365 - 65) / 131
 
