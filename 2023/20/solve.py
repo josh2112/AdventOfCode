@@ -115,15 +115,17 @@ def prob_2(data: list[str]):
 
     # This will be rm, which feeds into rx. It's a conjunction, meaning
     # all its inputs must be high to send out a low.
-    t1 = next(m for m in modules.values() if master_target.name in m.targets)
+    m1 = next(m for m in modules.values() if master_target.name in m.targets)
 
     # These are the 4 conjunctions that feed into rm. We need all their outputs to be high
     # which means each must have at least 1 low input
-    t2 = [m for m in modules.values() if t1.name in m.targets]
+    m2 = [m for m in modules.values() if m1.name in m.targets]
 
     # These are the 4 conjunctions that feed into the t2 conjunctions. We need all these to be low
     # so all their inputs must be high
-    t3 = [m for m in modules.values() for t in t2 if t.name in m.targets]
+    m3 = [m for m in modules.values() for t in m2 if t.name in m.targets]
+
+    time_m2_turned_on = {}
 
     i = 0
     while True:
@@ -131,8 +133,16 @@ def prob_2(data: list[str]):
         fast_run_network(modules, button)
         if not i % 100000:
             print(f"i = {i}")
-        for t in [t for t in t2 if t.is_on]:
-            print(f'i = {i}: {"".join(str(t.is_on) for t in t2)}')
+        if any(m.is_on for m in m2):
+            for m in [m for m in m2 if m.is_on]:
+                print(f"i = {i}: {m.name} turned on!")
+                time_m2_turned_on[m.name] = i
+                m2.remove(m)
+            if not m2:
+                break
+
+    for k, v in time_m2_turned_on.items():
+        print(k, v)
 
 
 def main():
