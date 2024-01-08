@@ -3,6 +3,7 @@
 import dataclasses
 import re
 import time
+import math
 
 # https://adventofcode.com/2023/day/20
 
@@ -16,79 +17,46 @@ PART = 2
 @dataclasses.dataclass
 class Module:
     name: str
-    targets: list[str]
+    targets: list["Module"]
     symbol: str
-    is_on: int = 0
-    inputs: dict[str, bool] = dataclasses.field(default_factory=dict)
+    is_on: bool = False
+    inputs: dict["Module", bool] = dataclasses.field(default_factory=dict)
+    
+    def __hash__(self) -> int:
+        return hash( self.name )
 
-    @staticmethod
-    def parse(line: str):
-        m = list(re.finditer(r"([^\s\->,])+", line))
-        name, symbol = m[0][0], ""
-        if not name[0].isalpha():
-            symbol = name[0]
-            name = name[1:]
-        return Module(name, [x[0] for x in m[1:]], symbol)
-
-
-def propagate(src: Module, pulse: bool, modules: dict[str, Module]):
-    outputs = []
-    for m in [modules[m] for m in src.targets]:
-        # print(f"{src.name} -> {'H' if pulse else 'L'} -> {m.name}")
-        if m.symbol == "%":
-            if not pulse:
-                m.is_on = not m.is_on
+    def propagate(self, pulse: bool):
+        outputs = []
+        for m in self.targets:
+            #print(f"{self.name} -> {'H' if pulse else 'L'} -> {m.name}")
+            if m.symbol == "%":
+                if not pulse:
+                    m.is_on = not m.is_on
+                    outputs.append((m, m.is_on))
+            elif m.symbol == "&":
+                m.inputs[self] = pulse
+                m.is_on = not all(m.inputs.values())
                 outputs.append((m, m.is_on))
-        elif m.symbol == "&":
-            m.inputs[src.name] = pulse
-            m.is_on = not all(m.inputs.values())
-            outputs.append((m, m.is_on))
-        else:
-            outputs.append((m, pulse))
-    return outputs
-
-
-def run_network(i: int, modules: dict[str, Module], button: Module):
-    # print(f"---[Run {i+1}]---")
-    pulses_lo, pulses_hi = 1, 0
-    outputs = propagate(button, False, modules)
-    while outputs:
-        pulses_lo += sum(len(ou[0].targets) for ou in outputs if not ou[1])
-        pulses_hi += sum(len(ou[0].targets) for ou in outputs if ou[1])
-        outputs = [
-            x for a in [propagate(op[0], op[1], modules) for op in outputs] for x in a
-        ]
-    # print("  ---[Flip-flops]---")
-    # for ff in [m for m in modules.values() if m.symbol == "%"]:
-    #    print(f"  {ff.name}: {'1' if ff.on else '0'}")
-    # print("  ---[pulses]---")
-    # print(f"  lo: {pulses_lo}")
-    # print(f"  hi: {pulses_hi}")
-    # print("------------------")
-    # ffstate = ["1" if ff.on else "0" for ff in modules.values() if ff.symbol == "%"]
-    # print(f"run {i+1}: ff = {''.join( ffstate )}, cnts = {pulses_lo}, {pulses_hi}")
-    return pulses_lo, pulses_hi
-
-
-def fast_run_network(modules: dict[str, Module], button: Module):
-    outputs = propagate(button, False, modules)
-    while outputs:
-        outputs = [
-            x for a in [propagate(op[0], op[1], modules) for op in outputs] for x in a
-        ]
+            else:
+                outputs.append((m, pulse))
+        return outputs
 
 
 def parse_modules(data: list[str]):
-    modules = {m.name: m for m in map(Module.parse, data)}
-    modules["button"] = Module("button", ["broadcaster"], "")
+    defs = [[m[0] for m in re.finditer(r"([^\s\->,])+", line)] for line in data]
+    modules = {m.name: m for m in [Module( d[0][1:] if not d[0][0].isalpha() else d[0], [], d[0][0] if not d[0][0].isalpha() else '' ) for d in defs]}
+    
+    for m in list(modules.values()):
+        for t in next( d[1:] for d in defs if d[0] == m.symbol + m.name ):
+            if t not in modules:
+                modules[t] = Module( t, [], '' )
+            m.targets.append(modules[t] )
+
+    modules["button"] = Module("button", [modules["broadcaster"]], "")
 
     for conj in [m for m in modules.values() if m.symbol == "&"]:
-        for src in [m for m in modules.values() if conj.name in m.targets]:
-            conj.inputs[src.name] = False
-
-    all_targets = [x for lst in [m.targets for m in modules.values()] for x in lst]
-    for unlinked in [n for n in all_targets if n not in modules]:
-        modules[unlinked] = Module(unlinked, [], "")
+        for src in [m for m in modules.values() if conj in m.targets]:
+            conj.inputs[src] = False
 
     return modules
 
@@ -99,50 +67,98 @@ def prob_1(data: list[str]):
     button = modules["button"]
 
     for i in range(1000):
-        plo, phi = run_network(i, modules, button)
-        pulses_lo += plo
-        pulses_hi += phi
+        #print(f"---[Run {i+1}]---")
+        outputs = button.propagate(False)
+        pulses_lo += 1
+        while outputs:
+            pulses_lo += sum(len(ou[0].targets) for ou in outputs if not ou[1])
+            pulses_hi += sum(len(ou[0].targets) for ou in outputs if ou[1])
+            outputs = [
+                x for a in [op[0].propagate(op[1]) for op in outputs] for x in a
+            ]
+        # print("  ---[Flip-flops]---")
+        # for ff in [m for m in modules.values() if m.symbol == "%"]:
+        #    print(f"  {ff.name}: {'1' if ff.on else '0'}")
+        # print("  ---[pulses]---")
+        # print(f"  lo: {pulses_lo}")
+        # print(f"  hi: {pulses_hi}")
+        # print("------------------")
+        # ffstate = ["1" if ff.on else "0" for ff in modules.values() if ff.symbol == "%"]
+        # print(f"run {i+1}: ff = {''.join( ffstate )}, cnts = {pulses_lo}, {pulses_hi}")
 
     return pulses_lo * pulses_hi
 
 
 def prob_2(data: list[str]):
     modules = parse_modules(data)
-    button = modules["button"]
 
-    # Find the master target (module with no outputs)
-    master_target = next(m for m in modules.values() if not m.targets)
+    # From visual inspection, there are actually 4 subgraphs. Each gets 1 input from broadcaster
+    # which runs through a network of flip-flops, finally ending at a conjunction feeding into
+    # another conjunction. These outer 4 conjunctions, from each network, feed into another conj
+    # which feeds into the master target.
+    #
+    # So, for each of the subgraphs, figure out when all of the flip-flops must be high. Then figure
+    # out when all networks will have this condition simultaneously.
 
-    # This will be rm, which feeds into rx. It's a conjunction, meaning
-    # all its inputs must be high to send out a low.
-    m1 = next(m for m in modules.values() if master_target.name in m.targets)
+    # entry flipflop and exit conjunction
+    Network = tuple[Module,Module]
+    networks: list[Network] = []
 
-    # These are the 4 conjunctions that feed into rm. We need all their outputs to be high
-    # which means each must have at least 1 low input
-    m2 = [m for m in modules.values() if m1.name in m.targets]
+    # Find the flip-flops making up each network. Starting with each broadcaster output, walk the
+    # tree until we see a conjunction. Isolate the subnetworks too: When we find the conjuction,
+    # disconnect its non-flip-fop targets.
+    for start in modules["broadcaster"].targets:
+        stack: set[Module] = set( [start] )
+        ffs = set()
+        end = None
+        while stack:
+            ff = stack.pop()
+            if ff not in ffs:
+                ffs.add( ff )
+                stack.update( t for t in ff.targets if t.symbol == '%' )
+                # If we find the conjuction, disconnect it
+                if conj := next( (t for t in ff.targets if t.symbol == '&'), None ):
+                    end = conj
+                    end.targets = [m for m in end.targets if m.symbol != '&']
+        networks.append( (start, end )) # type: ignore (end will be non-null)
 
-    # These are the 4 conjunctions that feed into the t2 conjunctions. We need all these to be low
-    # so all their inputs must be high
-    m3 = [m for m in modules.values() for t in m2 if t.name in m.targets]
+    counts: dict[Module,int] = {}
 
-    time_m2_turned_on = {}
+    
+    for entry_ff, exit_conj in networks:
+        count = 0
+        start = Module( "start", [entry_ff], '' )
+        
+        got_it = False
+        while True and not got_it:
+            count += 1
+            outputs = [(start,False)]
+            while outputs and not got_it:
+                outputs = [
+                    x for a in [op[0].propagate(op[1]) for op in outputs] for x in a
+                ]
+                # Did our conjunction get a low pulse yet??
+                if (exit_conj,False) in outputs:
+                    got_it = True
+        
+        counts[exit_conj] = count
+    
+    return math.lcm( *counts.values())
 
-    i = 0
-    while True:
-        i += 1
-        fast_run_network(modules, button)
-        if not i % 100000:
-            print(f"i = {i}")
-        if any(m.is_on for m in m2):
-            for m in [m for m in m2 if m.is_on]:
-                print(f"i = {i}: {m.name} turned on!")
-                time_m2_turned_on[m.name] = i
-                m2.remove(m)
-            if not m2:
-                break
-
-    for k, v in time_m2_turned_on.items():
-        print(k, v)
+def make_graphviz_file(data):
+    modules = parse_modules(data)
+    with open("graph.dot", "w") as f:
+        f.write( "digraph Day20 {\n" )
+        for m in modules.values():
+            f.write(f'{m.name} [label="{m.symbol}{m.name}", shape="{'rect' if m.symbol == '&' else 'ellipse'}"]\n')
+        for m in modules.values():
+            if m.targets:
+                f.write(
+                    f"{m.name} -> {', '.join( t.name for t in m.targets )}\n"
+                )
+        f.write( "broadcaster [shape=Mdiamond];\n")
+        f.write( "rx [shape=Mdiamond];\n")
+        f.write( "}" )
 
 
 def main():
