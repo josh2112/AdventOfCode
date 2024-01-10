@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/24"""
 
-import random
-import time
-import re
-import itertools
+import argparse
 from fractions import Fraction as fr
-
-# https://adventofcode.com/2023/day/24
+import itertools
+import random
+import re
+import time
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -33,34 +32,35 @@ class Line:
         return None if u < 0 or v < 0 else (a + c * u, b + d * u)
 
 
-# 1) Use fractions from the get-go!
-# 2) Make sure we're following algorithm from here:
-#    https://www.emathhelp.net/en/calculators/linear-algebra/gauss-jordan-elimination-calculator/?i=%5B%5B-10%2C356%2C0%2C14812412268358%2C287022209433985%2C0%2C89333401653650168%5D%2C%5B-112%2C0%2C356%2C-81050091763172%2C0%2C287022209433985%2C73670433839442792%5D%2C%5B0%2C-112%2C10%2C0%2C-81050091763172%2C-14812412268358%2C-28812517548277378%5D%2C%5B17%2C-229%2C0%2C-1957387301061%2C-171121971407932%2C0%2C-56628881128274154%5D%2C%5B82%2C0%2C-229%2C55102119420914%2C0%2C-171121971407932%2C-43669395605814875%5D%2C%5B0%2C82%2C-17%2C0%2C55102119420914%2C1957387301061%2C18787490095462241%5D%5D
-
-
 class GaussianElimination:
-    def __init__(self, matrix: list[list[float]]):
+    def __init__(self, matrix: list[list[fr]]):
         self.matrix = matrix
 
     def __str__(self) -> str:
         return "\n".join("".join(f"{i:5}" for i in row) for row in self.matrix)
 
-    def solve(self) -> list[float]:
+    def solve(self) -> list[fr]:
         # Using the xth row, eliminate the xth variable from all following rows.
         m = self.matrix
         for i in range(0, len(m) - 1):
             for r in range(i + 1, len(m)):
-                if m[r][i] == 0:
-                    continue
-                print(f"Using row {i}, eliminate {i}th var from row {r}:")
-                s = -m[r][i] / m[i][i]
-                for j in range(0, len(m[r])):
-                    m[r][j] += s * m[i][j]
+                if m[i][i] == 0:
+                    # Pivot element is zero. Swap with first row that is nonzero here.
+                    j = next(j for j in range(i + 1, len(m)) if m[j][i] != 0)
+                    # print(f"Swap rows {i+1} and {j+1}")
+                    tmp = m[j]
+                    m[j] = m[i]
+                    m[i] = tmp
+                else:
+                    s = -m[r][i] / m[i][i]
+                    # print(f"Add row {i+1} * {s} to row {r+1}:")
+                    for j in range(0, len(m[r])):
+                        m[r][j] += s * m[i][j]
 
         if all(i == 0 for i in m[-1][:-1]):
-            raise Exception("Dependent system, no solution")
+            raise ArithmeticError("Dependent system, no solution")
 
-        v: list[float] = [0] * len(m)
+        v: list[fr] = [fr(0)] * len(m)
 
         for i in range(len(v) - 1, -1, -1):
             for j in range(i + 1, len(m)):
@@ -70,20 +70,15 @@ class GaussianElimination:
         return v
 
 
-def prob_1(data: list[str]):
+def prob_1(data: list[str], is_example: bool ):
     lines = [Line([int(d) for d in re.split("[,@]", line)]) for line in data]
-    bounds = (7, 27) if "ex" in INPUT else (200000000000000, 400000000000000)
+    bounds = (7, 27) if is_example else (200000000000000, 400000000000000)
 
     cnt = 0
     for a, b in itertools.combinations(lines, 2):
-        cross = a.intersect_2d(b)
-        if not cross:
-            pass
-        elif (
-            cross[0] >= bounds[0]
-            and cross[0] <= bounds[1]
-            and cross[1] >= bounds[0]
-            and cross[1] <= bounds[1]
+        if (cross := a.intersect_2d(b)) and (
+            (bounds[0] <= cross[0] <= bounds[1])
+            and (bounds[0] <= cross[1] <= bounds[1])
         ):
             cnt += 1
 
@@ -98,57 +93,67 @@ def eq_xyz(l0: Line, l1: Line):
 
     return [
         [
-            dy0 - dy1,
-            dx1 - dx0,
-            0,
-            y1 - y0,
-            x0 - x1,
-            0,
-            x0 * dy0 - y0 * dx0 - x1 * dy1 + y1 * dx1,
+            fr(dy0 - dy1),
+            fr(dx1 - dx0),
+            fr(0),
+            fr(y1 - y0),
+            fr(x0 - x1),
+            fr(0),
+            fr(x0 * dy0 - y0 * dx0 - x1 * dy1 + y1 * dx1),
         ],
         [
-            dz0 - dz1,
-            0,
-            dx1 - dx0,
-            z1 - z0,
-            0,
-            x0 - x1,
-            x0 * dz0 - z0 * dx0 - x1 * dz1 + z1 * dx1,
+            fr(dz0 - dz1),
+            fr(0),
+            fr(dx1 - dx0),
+            fr(z1 - z0),
+            fr(0),
+            fr(x0 - x1),
+            fr(x0 * dz0 - z0 * dx0 - x1 * dz1 + z1 * dx1),
         ],
         [
-            0,
-            dz0 - dz1,
-            dy1 - dy0,
-            0,
-            z1 - z0,
-            y0 - y1,
-            y0 * dz0 - z0 * dy0 - y1 * dz1 + z1 * dy1,
+            fr(0),
+            fr(dz0 - dz1),
+            fr(dy1 - dy0),
+            fr(0),
+            fr(z1 - z0),
+            fr(y0 - y1),
+            fr(y0 * dz0 - z0 * dy0 - y1 * dz1 + z1 * dy1),
         ],
     ]
 
 
 def prob_2(data: list[str]):
     all_lines = [Line([int(d) for d in re.split("[,@]", line)]) for line in data]
-    # lines = random.choices(all_lines, k=3)
-    lines = [all_lines[10], all_lines[20], all_lines[30]]
+    lines = random.choices(all_lines, k=3)
 
     # a, b, c, da, db, dc
     system = eq_xyz(lines[0], lines[1])
     system.extend(eq_xyz(lines[1], lines[2]))
-    g = GaussianElimination(system).solve()
-    return g
+    r = GaussianElimination(system).solve()
+    print(f"{r[0]}, {r[1]}, {r[2]} @ {r[3]}, {r[4]}, {r[5]}")
+    return round(r[0] + r[1] + r[2], 10)
 
 
-def main():
-    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 24.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data, "ex" in infile)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":
