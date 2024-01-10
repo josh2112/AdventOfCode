@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/20"""
 
+import argparse
 import dataclasses
 import re
 import time
 import math
-
-# https://adventofcode.com/2023/day/20
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -145,9 +144,11 @@ def prob_2(data: list[str]):
     
     return math.lcm( *counts.values())
 
+# Makes a dot file to be plotted by graphviz, without which there would
+# be no hope of finding the "trick" for this
 def make_graphviz_file(data):
     modules = parse_modules(data)
-    with open("graph.dot", "w") as f:
+    with open("graph.dot", "w", encoding="utf-8") as f:
         f.write( "digraph Day20 {\n" )
         for m in modules.values():
             f.write(f'{m.name} [label="{m.symbol}{m.name}", shape="{'rect' if m.symbol == '&' else 'ellipse'}"]\n')
@@ -161,16 +162,26 @@ def make_graphviz_file(data):
         f.write( "}" )
 
 
-def main():
-    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 20.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

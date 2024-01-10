@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/18"""
 
+import argparse
 import time
-import functools
-from dataclasses import dataclass
 
-# https://adventofcode.com/2023/day/18
+from dataclasses import dataclass
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -91,6 +90,8 @@ def calc_volume(instrs: list[tuple[int, str]]) -> int:
     ymin = min(e.v0.y for e in edges)
     ymax = max(e.v1.y for e in edges)
 
+    cnt = ymax - ymin
+
     volume = 0
     for y in range(ymin, ymax + 1):
         volume += calc_scanline_volume(
@@ -100,6 +101,9 @@ def calc_volume(instrs: list[tuple[int, str]]) -> int:
                 key=lambda e: e.v0.x + e.v1.x,
             ),
         )
+
+        if not y % 10_000:
+            print(f"Calculating scanline {y-ymin}/{cnt}", end="\r")
 
     return volume
 
@@ -120,16 +124,26 @@ def prob_2(data: list[str]):
     )
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 18.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

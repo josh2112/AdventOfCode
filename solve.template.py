@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/$year/day/$day"""
 
+import argparse
 import time
-
-# https://adventofcode.com/$year/day/$day
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -11,24 +10,36 @@ INPUT = "input.txt"
 PART = 1
 
 
-def prob_1(data: list[str]):
+def prob_1(data: list[str]) -> int:
     print(data)
+    return 0
 
 
-def prob_2(data: list[str]):
+def prob_2(data: list[str]) -> int:
     print(data)
+    return 0
 
 
-def main():
-    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC $year day $day.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

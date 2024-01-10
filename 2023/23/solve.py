@@ -1,18 +1,42 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/23"""
 
+import argparse
 from collections import defaultdict
+from enum import IntEnum
 from itertools import pairwise
 import time
 
-from aoclib.direction import Direction, XYPos
-
-# https://adventofcode.com/2023/day/23
+# I'm too dumb to relative import from a lower level...
+# from aoclib.direction import Direction, XYPos
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
 PART = 2
+
+
+XYPos = tuple[int, int]
+
+VECTORS = ((0, -1), (1, 0), (0, 1), (-1, 0))
+
+class Direction(IntEnum):
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
+
+    def turn(self, cw_count: int) -> "Direction":
+        return self.__class__((self.value + cw_count) % len(Direction.__members__))  # type: ignore
+
+    @property
+    def vector(self) -> XYPos:
+        return VECTORS[self.value]
+
+    def advance(self, coord: XYPos, count: int = 1) -> XYPos:
+        vec = self.vector
+        return coord[0] + vec[0] * count, coord[1] + vec[1] * count
+
 
 Nodes = dict[XYPos, dict[XYPos, int]]
 
@@ -123,6 +147,10 @@ def walk(nodes: Nodes, start: XYPos, goal: XYPos) -> int:
                             f"{time.perf_counter()-time_start}: Found path of {steps} steps"
                         )
                         max_steps = steps
+                        # TODO: The longest path is found quickly, but we keep churning through
+                        # possibilities. Short-circuiting to avoid that.
+                        if max_steps >= 6230:
+                            return max_steps
                 elif n not in path:
                     possibilities.append(n)
             if not possibilities:
@@ -153,18 +181,26 @@ def prob_2(data: list[str]):
     return longest_path(data, ignore_directionals=True)
 
 
-def main():
-    from os.path import join, dirname
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 23.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
 
-    inp = join(dirname(__file__), INPUT or "input.txt")
-    with open(inp, mode="r", encoding="utf-8") as f:
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
+
     elapsed = time.perf_counter() - start
-    print(f"Problem {PART}: {result}")
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

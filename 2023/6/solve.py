@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/6"""
 
+import argparse
 from dataclasses import dataclass
 import math
 import time
-
-# https://adventofcode.com/2023/day/6
+from typing import Iterable
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -30,13 +30,21 @@ def solve_quad(a: float, b: float, c: float):
     return ((-b + discr) / (2 * a), (-b - discr) / (2 * a))
 
 
-def solve_races(races: list[Race]):
+def solve_races(races: Iterable[Race]):
     num_ways = []
     for race in races:
         crossings = solve_quad(-1, race.time, -race.dist)
         num_ways.append(
-            (crossings[1] - 1 if crossings[1] == int(crossings[1]) else math.floor(crossings[1]))
-            - (crossings[0] + 1 if crossings[0] == int(crossings[0]) else math.ceil(crossings[0]))
+            (
+                crossings[1] - 1
+                if crossings[1] == int(crossings[1])
+                else math.floor(crossings[1])
+            )
+            - (
+                crossings[0] + 1
+                if crossings[0] == int(crossings[0])
+                else math.ceil(crossings[0])
+            )
             + 1
         )
     return int(math.prod(num_ways))
@@ -44,7 +52,9 @@ def solve_races(races: list[Race]):
 
 def prob_1(data: list[str]):
     data2 = [line.split()[1:] for line in data]
-    return solve_races(Race(int(data2[0][i]), int(data2[1][i])) for i in range(len(data2[0])))
+    return solve_races(
+        Race(int(data2[0][i]), int(data2[1][i])) for i in range(len(data2[0]))
+    )
 
 
 def prob_2(data: list[str]):
@@ -52,16 +62,26 @@ def prob_2(data: list[str]):
     return solve_races([Race(t, d)])
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 6.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

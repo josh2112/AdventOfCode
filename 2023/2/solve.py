@@ -1,27 +1,31 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/2"""
+
+import argparse
 import math
 import re
-
-# https://adventofcode.com/2023/day/3
+import time
 
 # Input file path, or None for the default, "input.txt"
-INPUT = "input.ex.txt"
+INPUT = "input.txt"
 
 # Daily problem to solve, 1 or 2
-PROBLEM = 2
+PART = 2
+
+
+def parse(g):
+    return (int(g[0].split()[1]), [r.split(", ") for r in g[1:]])
 
 
 def process(data: list[str]):
-    process = lambda g: (int(g[0].split()[1]), [r.split(", ") for r in g[1:]])
-    return [process(re.split("[;:]", line)) for line in data]
+    return [parse(re.split("[;:]", line)) for line in data]
 
 
 def prob_1(data: list[str]):
     maxcol = {"red": 12, "green": 13, "blue": 14}
 
     def is_impossible(g):
-        for round in g[1:]:
-            for ballcnts in round:
+        for rnd in g[1:]:
+            for ballcnts in rnd:
                 for ballcnt in ballcnts:
                     num, col = ballcnt.split()
                     if int(num) > maxcol[col]:
@@ -35,8 +39,8 @@ def prob_1(data: list[str]):
 def prob_2(data: list[str]):
     def power(g):
         max_balls_for_game = {"red": 0, "green": 0, "blue": 0}
-        for round in g[1:]:
-            for ballcnts in round:
+        for rnd in g[1:]:
+            for ballcnts in rnd:
                 for ballcnt in ballcnts:
                     num, col = ballcnt.split()
                     if int(num) > max_balls_for_game[col]:
@@ -46,12 +50,26 @@ def prob_2(data: list[str]):
     return sum(power(g) for g in process(data))
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 2.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
-    print(f"Problem {PROBLEM}")
-    print(prob_1(data) if PROBLEM == 1 else prob_2(data))
+    start = time.perf_counter()
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
+
+    elapsed = time.perf_counter() - start
+    print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

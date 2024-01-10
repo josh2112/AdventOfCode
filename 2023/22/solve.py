@@ -1,10 +1,7 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/22"""
 
+import argparse
 import time
-
-# from PIL import Image
-
-# https://adventofcode.com/2023/day/22
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -13,6 +10,7 @@ INPUT = "input.txt"
 PART = 2
 
 
+# Generate names A..Z, AA..ZZ, AAA... etc.
 def names():
     for i in range(26):
         yield chr(ord("A") + i)
@@ -131,16 +129,26 @@ def prob_2(data: list[str]):
     return sum(len(f) for f in fall_cnt.values())
 
 
-def main():
-    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 22.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/14"""
 
+import argparse
 import time
-
-# https://adventofcode.com/2023/day/14
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -14,13 +13,13 @@ PART = 2
 def roll_west(data: list[list[str]]):
     for line in data:
         stop_point = 0
-        for x in range(len(line)):
-            if line[x] == "O":
+        for x, c in enumerate(line):
+            if c == "O":
                 if stop_point < x:
                     line[stop_point] = "O"
                     line[x] = "."
                 stop_point += 1
-            elif line[x] == "#":
+            elif c == "#":
                 stop_point = x + 1
 
 
@@ -102,16 +101,26 @@ def prob_2(data: list[str]):
     return predict_from_cycle(loads, 1000000000, offset, width) if width > 0 else 0
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 14.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

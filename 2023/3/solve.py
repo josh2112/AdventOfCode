@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/3"""
+
+import argparse
 import re
 import math
-
-# https://adventofcode.com/2023/day/3
+import time
 
 # Input file path, or None for the default, "input.txt"
 INPUT = "input.txt"
 
 # Daily problem to solve, 1 or 2
-PROBLEM = 2
+PART = 2
 
 
 def prob_1(data: list[str]):
@@ -56,12 +57,26 @@ def prob_2(data: list[str]):
     )
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 3.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
-    print(f"Problem {PROBLEM}")
-    print(prob_1(data) if PROBLEM == 1 else prob_2(data))
+    start = time.perf_counter()
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
+
+    elapsed = time.perf_counter() - start
+    print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

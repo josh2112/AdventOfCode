@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/12"""
 
+import argparse
 import time
 import functools
 from typing import Tuple
-
-# https://adventofcode.com/2023/day/12
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -12,7 +11,7 @@ INPUT = "input.txt"
 # Part to solve, 1 or 2 (or 0 for test cases)
 PART = 2
 
-row: Tuple[str, ...] = ("",)
+ROW: Tuple[str, ...] = ("",)
 
 
 @functools.cache
@@ -22,8 +21,8 @@ def bfs(
     groups: Tuple[int, ...],
     group_cnt: int,
 ) -> int:
-    for i in range(row_idx, len(row)):
-        c = repl_first if i == row_idx and repl_first else row[i]
+    for i in range(row_idx, len(ROW)):
+        c = repl_first if i == row_idx and repl_first else ROW[i]
         if c == "#":
             # Are we out of groups or have we overrun the current group?
             if not groups or group_cnt == groups[0]:
@@ -46,18 +45,12 @@ def bfs(
     return 1 if not groups or (len(groups) == 1 and group_cnt == groups[0]) else 0
 
 
-def test():
-    global row
-    row = tuple([r for r in ".????."])
-    return bfs(0, "", (1, 1), 0)
-
-
 def prob_1(data: list[str]):
-    global row
+    global ROW
     num = 0
     for line in data:
         rowtmp, groups = line.split()
-        row = tuple([r for r in rowtmp])
+        ROW = tuple(rowtmp)
         groups = [int(i) for i in groups.split(",")]
         bfs.cache_clear()
         num += bfs(0, "", tuple(groups), 0)
@@ -65,30 +58,34 @@ def prob_1(data: list[str]):
 
 
 def prob_2(data: list[str]):
-    for i in range(len(data)):
-        row, groups = data[i].split()
+    for i, r in enumerate(data):
+        row, groups = r.split()
         data[i] = (
             "?".join(row for _ in range(5)) + " " + ",".join(groups for _ in range(5))
         )
     return prob_1(data)
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 12.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    match PART:
-        case 0:
-            result = test()
-        case 1:
-            result = prob_1(data)
-        case 2:
-            result = prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

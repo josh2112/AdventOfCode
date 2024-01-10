@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/7"""
 
+import argparse
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import cmp_to_key
 import time
-
-# https://adventofcode.com/2023/day/7
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -17,6 +16,7 @@ CARDS = [str(i) for i in range(2, 10)] + ["T", "J", "Q", "K", "A"]
 
 
 class HandType(IntEnum):
+    INVALID = 0
     HIGH_CARD = 1
     ONE_PAIR = 2
     TWO_PAIR = 3
@@ -33,7 +33,7 @@ def cards2str(cards: list[int]):
     return "".join(CARDS[c] for c in cards)
 
 
-def classify(cards: list[int]):
+def classify(cards: list[int]) -> HandType:
     cardset = set(cards)
     t = HandType(DISTINCT_CARDS_TO_HAND_TYPE[len(cardset)])
     if len(cardset) == 2 or len(cardset) == 3:
@@ -49,11 +49,11 @@ def classify(cards: list[int]):
     return t
 
 
-def classify_with_wildcard(cards: list[int]):
+def classify_with_wildcard(cards: list[int]) -> HandType:
     if 0 not in cards:
         return classify(cards)
     wildcard_indices = [i for i, c in enumerate(cards) if c == 0]
-    best_type = 0
+    best_type = HandType.INVALID
     for i in range(len(CARDS) - 1, -1, -1):
         for w in wildcard_indices:
             cards[w] = i
@@ -74,7 +74,9 @@ class Hand:
         self.cards = [CARDS.index(c) for c in cards]
         self.bid = int(bid)
 
-        self.type = classify(self.cards) if PART == 1 else classify_with_wildcard(self.cards)
+        self.type = (
+            classify(self.cards) if PART == 1 else classify_with_wildcard(self.cards)
+        )
 
 
 def compare_hands(h1: Hand, h2: Hand) -> int:
@@ -90,6 +92,7 @@ def compare_hands(h1: Hand, h2: Hand) -> int:
     return 0
 
 
+# TODO: Somehow broke part 1 solution when doing part 2...
 def prob_1(data: list[str]):
     hands = sorted([Hand(line) for line in data], key=cmp_to_key(compare_hands))
     return sum(h.bid * (i + 1) for (i, h) in enumerate(hands))
@@ -102,16 +105,26 @@ def prob_2(data: list[str]):
     return sum(h.bid * (i + 1) for (i, h) in enumerate(hands))
 
 
-def main():
-    with open(INPUT or "input.txt", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 7.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":

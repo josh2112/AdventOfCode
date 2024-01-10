@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
+"""https://adventofcode.com/2023/day/25"""
 
+import argparse
 from collections import defaultdict
 import dataclasses
 import random
 import time
 import itertools
 from typing import Union
-
-# https://adventofcode.com/2023/day/25
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -73,6 +72,9 @@ class Visitor:
                     q.append(w)
 
 
+# Stochastically "solve" by tracing paths between a bunch of random pairs
+# of nodes. If everything goes well, the 3 edges we're looking for will
+# have been used way more than the rest. Slow, but no dependencies!
 def prob_1(data: list[str]):
     nodes, edges = parse(data)
 
@@ -80,13 +82,11 @@ def prob_1(data: list[str]):
     edgecnt: dict[tuple[str, str], int] = defaultdict(int)
 
     combos = random.sample(list(itertools.combinations(nodes, 2)), 100)
-    print("Num pairs to check:", len(combos))
     i = 0
 
     for a, b in combos:
         i += 1
-        # if not (i % 100):
-        print("Checked", i)
+        print(f"Checking {i}/{len(combos)}", end="\r")
         dest = v.pathfind_bfs(a, b)
         n = dest
         path = []
@@ -122,20 +122,30 @@ def prob_1(data: list[str]):
     return len(g1) * len(g2)
 
 
-def prob_2(data: list[str]):
-    print(data)
+def prob_2(_data: list[str]):
+    return "Freebie!"
 
 
-def main():
-    with open(INPUT or "input.txt", mode="r", encoding="utf-8") as f:
+def main() -> float:
+    parser = argparse.ArgumentParser(description="Solves AoC 2023 day 25.")
+    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
+    parser.add_argument("-i", "--input", default=INPUT)
+    args = parser.parse_args()
+    part, infile = args.part, args.input
+
+    with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
     start = time.perf_counter()
-    result = prob_1(data) if PART == 1 else prob_2(data)
-    elapsed = time.perf_counter() - start
+    if part in ("1", "all"):
+        print(f"Part 1: {prob_1(data)}")
+    if part in ("2", "all"):
+        print(f"Part 2: {prob_2(data)}")
 
-    print(f"Problem {PART}: {result}")
+    elapsed = time.perf_counter() - start
     print(f"Time: {elapsed} s")
+
+    return elapsed
 
 
 if __name__ == "__main__":
