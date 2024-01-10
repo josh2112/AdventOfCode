@@ -4,6 +4,7 @@ import random
 import time
 import re
 import itertools
+from fractions import Fraction as fr
 
 # https://adventofcode.com/2023/day/24
 
@@ -32,6 +33,11 @@ class Line:
         return None if u < 0 or v < 0 else (a + c * u, b + d * u)
 
 
+# 1) Use fractions from the get-go!
+# 2) Make sure we're following algorithm from here:
+#    https://www.emathhelp.net/en/calculators/linear-algebra/gauss-jordan-elimination-calculator/?i=%5B%5B-10%2C356%2C0%2C14812412268358%2C287022209433985%2C0%2C89333401653650168%5D%2C%5B-112%2C0%2C356%2C-81050091763172%2C0%2C287022209433985%2C73670433839442792%5D%2C%5B0%2C-112%2C10%2C0%2C-81050091763172%2C-14812412268358%2C-28812517548277378%5D%2C%5B17%2C-229%2C0%2C-1957387301061%2C-171121971407932%2C0%2C-56628881128274154%5D%2C%5B82%2C0%2C-229%2C55102119420914%2C0%2C-171121971407932%2C-43669395605814875%5D%2C%5B0%2C82%2C-17%2C0%2C55102119420914%2C1957387301061%2C18787490095462241%5D%5D
+
+
 class GaussianElimination:
     def __init__(self, matrix: list[list[float]]):
         self.matrix = matrix
@@ -44,6 +50,8 @@ class GaussianElimination:
         m = self.matrix
         for i in range(0, len(m) - 1):
             for r in range(i + 1, len(m)):
+                if m[r][i] == 0:
+                    continue
                 print(f"Using row {i}, eliminate {i}th var from row {r}:")
                 s = -m[r][i] / m[i][i]
                 for j in range(0, len(m[r])):
@@ -121,7 +129,8 @@ def eq_xyz(l0: Line, l1: Line):
 
 def prob_2(data: list[str]):
     all_lines = [Line([int(d) for d in re.split("[,@]", line)]) for line in data]
-    lines = random.choices(all_lines, k=3)
+    # lines = random.choices(all_lines, k=3)
+    lines = [all_lines[10], all_lines[20], all_lines[30]]
 
     # a, b, c, da, db, dc
     system = eq_xyz(lines[0], lines[1])
