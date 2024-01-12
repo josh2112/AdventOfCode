@@ -70,7 +70,7 @@ class GaussianElimination:
         return v
 
 
-def prob_1(data: list[str], is_example: bool ):
+def prob_1(data: list[str], is_example: bool):
     lines = [Line([int(d) for d in re.split("[,@]", line)]) for line in data]
     bounds = (7, 27) if is_example else (200000000000000, 400000000000000)
 
@@ -146,7 +146,7 @@ def main() -> float:
 
     start = time.perf_counter()
     if part in ("1", "all"):
-        print(f"Part 1: {prob_1(data, "ex" in infile)}")
+        print(f"Part 1: {prob_1(data, 'ex' in infile)}")
     if part in ("2", "all"):
         print(f"Part 2: {prob_2(data)}")
 
