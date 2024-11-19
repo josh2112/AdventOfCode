@@ -1,11 +1,11 @@
 """https://adventofcode.com/2023/day/24"""
 
 import argparse
-from fractions import Fraction as fr
 import itertools
 import random
 import re
 import time
+from fractions import Fraction as fr
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -70,7 +70,7 @@ class GaussianElimination:
         return v
 
 
-def prob_1(data: list[str], is_example: bool ):
+def prob_1(data: list[str], is_example: bool):
     lines = [Line([int(d) for d in re.split("[,@]", line)]) for line in data]
     bounds = (7, 27) if is_example else (200000000000000, 400000000000000)
 

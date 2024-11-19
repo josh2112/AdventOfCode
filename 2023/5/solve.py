@@ -4,10 +4,9 @@ import argparse
 from dataclasses import dataclass, field
 import time
 import sys
-from typing import Sequence, Tuple
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Part to solve, 1 or 2
 PART = 2
@@ -56,10 +55,10 @@ def make_mappings(data: list[str]):
 
 
 def find_best_location(
-    seeds: Sequence[int],
+    seeds: list[int],
     mappings: list[Mapping],
-    prev_best: Tuple[int, int] = (-1, sys.maxsize),
-) -> Tuple[int, int]:
+    prev_best: tuple[int, int] = (-1, sys.maxsize),
+) -> tuple[int, int]:
     best = prev_best
     for seed in seeds:
         v = seed
@@ -78,7 +77,8 @@ def find_best_location_rev(seed_ranges: list[range], mappings: list[Mapping]):
         for m in mappings:
             v = m.map_rev(v)
         # is v a valid seed?
-        if next((r for r in seed_ranges if v in r), None):
+        if next((r 
+        for r in seed_ranges if v in r), None):
             return loc
         if not loc % 1000000:
             print(loc)
