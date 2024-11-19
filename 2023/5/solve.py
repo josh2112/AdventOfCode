@@ -51,7 +51,7 @@ def make_mappings(data: list[str]):
             m = Mapping()
         else:
             m.ranges.append(Range(*[int(v) for v in line.split()]))
-    return m
+    yield m
 
 
 def find_best_location(
@@ -64,7 +64,7 @@ def find_best_location(
         v = seed
         for m in mappings:
             v = m.map(v)
-        if not best or v < best[1]:
+        if v < best[1]:
             best = (seed, v)
     return best
 
@@ -86,8 +86,8 @@ def find_best_location_rev(seed_ranges: list[range], mappings: list[Mapping]):
 
 
 def prob_1(data: list[str]):
-    seeds = [int(s) for s in data[0].split()[1:]]
     mappings = list(make_mappings(data))
+    seeds = [int(s) for s in data[0].split()[1:]]
     return find_best_location(seeds, mappings)[1]
 
 

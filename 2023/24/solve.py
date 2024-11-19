@@ -146,7 +146,7 @@ def main() -> float:
 
     start = time.perf_counter()
     if part in ("1", "all"):
-        print(f"Part 1: {prob_1(data, "ex" in infile)}")
+        print(f"Part 1: {prob_1(data, 'ex' in infile)}")
     if part in ("2", "all"):
         print(f"Part 2: {prob_2(data)}")
 
