@@ -3,6 +3,8 @@
 import argparse
 import time
 from dataclasses import dataclass
+from itertools import permutations
+from sys import maxsize
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -11,39 +13,35 @@ INPUT = "input.txt"
 PART = 1
 
 
-@dataclass
-class Edge:
-    v1: str
-    v2: str
-    dist: int
-
-
-def parse(data: list[str]) -> list[Edge]:
+def parse(data: list[str]) -> tuple[tuple[str, str], int]:
     for line in data:
         tk = line.split()
-        yield Edge(tk[0][:2], tk[2][:2], int(tk[4]))
+        yield (tk[0][:2], tk[2][:2]), int(tk[4])
+        yield (tk[2][:2], tk[0][:2]), int(tk[4])
+
+
+def calc_dist(path: tuple[str, ...], edges: dict[tuple[str, str], int]) -> int:
+    return sum(edges[hop] for hop in zip(path, path[1:]))
 
 
 def prob_1(data: list[str]) -> int:
-    edges_by_dist = sorted(parse(data), key=lambda e: e.dist)
-    all_vertices = set(v for pr in [(e.v1, e.v2) for e in edges_by_dist] for v in pr)
-    edges = []
-    while True:
-        e = edges_by_dist.pop(0)
-        print(f"Adding {e}")
-        edges.append(e)
-
-        reachable = set(v for pr in [(e.v1, e.v2) for e in edges] for v in pr)
-        print(f"still not reachable: {all_vertices.difference(reachable )}")
-        if reachable == all_vertices:
-            break
-    print(edges)
-    return sum(e.dist for e in edges)
+    edges = dict(parse(data))
+    best = (None, maxsize)  # path, dist
+    for path in permutations(set(v for pr in edges for v in pr)):
+        dist = calc_dist(path, edges)
+        if dist < best[1]:
+            best = (path, dist)
+    return best[1]
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    edges = dict(parse(data))
+    worst = (None, 0)  # path, dist
+    for path in permutations(set(v for pr in edges for v in pr)):
+        dist = calc_dist(path, edges)
+        if dist > worst[1]:
+            worst = (path, dist)
+    return worst[1]
 
 
 def main() -> float:
