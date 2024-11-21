@@ -17,6 +17,8 @@ class Reindeer:
     speed: int
     t_fly: int
     t_rest: int
+    dist: int = 0
+    points: int = 0
 
 
 def parse(data: list[str]) -> Reindeer:
@@ -31,8 +33,6 @@ def prob_1(data: list[str]) -> int:
     t = 2503
     best = 0
     for d in deer:
-        # 0, 3, 6, 9, 12, 12, 12, 12, 12, 12, 15, 18, 21, 24, 24....
-        # a = complete fly/rest cycles, rem = seconds left over
         a, rem = divmod(t, d.t_fly + d.t_rest)
         dist = a * d.speed * d.t_fly
         if rem < d.t_fly:
@@ -43,13 +43,30 @@ def prob_1(data: list[str]) -> int:
         if dist > best:
             best = dist
 
-        print(f"{t}: {d.name} at {dist} km")
+        # print(f"{d.name} at {dist} km")
     return best
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    deer: list[Reindeer] = list(parse(data))
+    for t in range(1, 2504):
+        for d in deer:
+            a, rem = divmod(t, d.t_fly + d.t_rest)
+            d.dist = a * d.speed * d.t_fly
+            if rem < d.t_fly:
+                d.dist += rem * d.speed
+            else:
+                d.dist += d.speed * d.t_fly
+
+        max_dist = max(d.dist for d in deer)
+        for d in [d for d in deer if d.dist == max_dist]:
+            d.points += 1
+
+        if t == 1000:
+            for d in deer:
+                print(f"{d.name} has {d.points} pts")
+
+    return max(d.points for d in deer)
 
 
 def main() -> float:
