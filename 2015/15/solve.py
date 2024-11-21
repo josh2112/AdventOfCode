@@ -11,16 +11,19 @@ INPUT = "input.txt"
 PART = 1
 
 
-def parse(data: list[str]) -> tuple[str, tuple[int, ...]]:
-    # Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8
+def parse(data: list[str]) -> tuple[str, tuple[int, ...], int]:
     for line in data:
         tk = line.replace(":", "").replace(",", "").split()
-        yield tk[0], (int(tk[2]), int(tk[4]), int(tk[6]), int(tk[8]))
+        yield tk[0], (int(tk[2]), int(tk[4]), int(tk[6]), int(tk[8])), int(tk[10])
 
 
 def score_cookie(
-    ings: list[tuple[str, tuple[int, ...]]], amounts: tuple[int, ...]
+    ings: list[tuple[str, tuple[int, ...], int]],
+    amounts: tuple[int, ...],
+    calorie_limit=None,
 ) -> int:
+    if max(sum(ing[2] * amounts[i] for i, ing in enumerate(ings)), 0) != 500:
+        return 0
     score = 1
     for p in range(len(ings[0][1])):
         s = max(sum(ing[1][p] * amounts[i] for i, ing in enumerate(ings)), 0)
@@ -37,8 +40,9 @@ def prob_1(data: list[str]) -> int:
         p for p in product(range(101), repeat=len(ings[0][1])) if sum(p) == 100
     ):
         score = score_cookie(ings, amts)
-        print(f"{amts}: {score}")
-        max_score = max(max_score, score)
+        if score > max_score:
+            print(f"{amts}: {score}")
+            max_score = max(max_score, score)
     return max_score
 
 
