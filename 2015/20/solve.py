@@ -18,6 +18,10 @@ def distribute_presents(limit: int, multiple: int, target: int, elf_limit=None):
     return next((i for i, h in enumerate(houses) if h >= target), None)
 
 
+# Find highly-composite numbers (antiprimes) and sum their factors until we get to 3_400_000
+# 27720 is the 25th highly-composite number
+
+
 def prob_1(data: list[str]) -> int:
     return distribute_presents(1_000_000, 10, int(data[0]))
 
