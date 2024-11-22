@@ -12,19 +12,25 @@ INPUT = "input.txt"
 PART = 1
 
 
+# Find highly-composite numbers (antiprimes) and sum their factors until we get to 3_400_000
+# 27720 is the 25th highly-composite number
+
+
 def prob_1(data: list[str]) -> int:
     tgt = int(data[0]) / 10  # 3_400_000
 
-    prcnt = []
-    h = 2600
+    # bounds = (27720, 27720)
+    bounds = (1, 120)
+
+    cnts = []
+    h = bounds[0]
     while True:
         presents = sum(e for e in range(1, h + 1) if not (h % e))
 
-        prcnt.append(presents)
-        print(h, presents)
+        cnts.append((h, presents))
 
-        if h == 2620:
-            plot.plot(range(1, len(prcnt) + 1), prcnt)
+        if h == bounds[1]:
+            plot.plot(range(1, len(cnts) + 1), cnts)
             plot.show()
             break
 
@@ -32,6 +38,13 @@ def prob_1(data: list[str]) -> int:
             break
 
         h += 1
+
+    top = max(cnts, key=lambda f: -f[1] / f[0])
+    print(top)
+    print(
+        "factors",
+        [e for e in range(1, top[0] + 1) if not (top[0] % e)],
+    )
 
     return h
 
