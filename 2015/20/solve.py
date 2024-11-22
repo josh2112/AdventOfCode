@@ -3,41 +3,27 @@
 import argparse
 import time
 
-import matplotlib.pyplot as plot
-
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
+
+
+def distribute_presents(limit: int, multiple: int, target: int, elf_limit=None):
+    houses = [multiple] * (limit + 1)
+    for i in range(2, limit + 1):
+        for j in range(i, limit + 1, i)[:elf_limit]:
+            houses[j] += i * multiple
+    return next((i for i, h in enumerate(houses) if h >= target), None)
 
 
 def prob_1(data: list[str]) -> int:
-    tgt = int(data[0]) / 10  # 3_400_000
-
-    prcnt = []
-    h = 2600
-    while True:
-        presents = sum(e for e in range(1, h + 1) if not (h % e))
-
-        prcnt.append(presents)
-        print(h, presents)
-
-        if h == 2620:
-            plot.plot(range(1, len(prcnt) + 1), prcnt)
-            plot.show()
-            break
-
-        if presents >= tgt:
-            break
-
-        h += 1
-
-    return h
+    return distribute_presents(1_000_000, 10, int(data[0]))
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
+    return distribute_presents(1_000_000, 11, int(data[0]), 50)
     return 0
 
 
