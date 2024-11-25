@@ -3,7 +3,6 @@
 import argparse
 import time
 from collections import namedtuple
-from dataclasses import dataclass
 from itertools import chain, permutations
 from math import ceil
 from sys import maxsize
@@ -39,13 +38,6 @@ RINGS = [
     Item(40, 0, 2),
     Item(80, 0, 3),
 ]
-
-
-@dataclass
-class Character:
-    hp: int
-    damage: int
-    armor: int
 
 
 def battle(p_hp, p_dmg, p_arm, boss_hp, boss_dmg, boss_arm, lose: bool = False) -> bool:
