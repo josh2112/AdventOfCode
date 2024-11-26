@@ -10,14 +10,50 @@ INPUT = "input.txt"
 PART = 1
 
 
+def parse(data: list[str]) -> tuple:
+    for line in data:
+        yield [
+            int(t) if t[0] == "-" or t[0] == "+" else t
+            for t in line.replace(",", "").split()
+        ]
+
+
+def run(prog, reg, ip):
+    while ip >= 0 and ip < len(prog):
+        oldip = ip
+        instr = prog[ip]
+
+        if instr[0][0] == "h":
+            reg[instr[1]] /= 2
+        elif instr[0][0] == "t":
+            reg[instr[1]] *= 3
+        elif instr[0][0] == "i":
+            reg[instr[1]] += 1
+        elif instr[0][2] == "p":
+            ip += instr[1]
+        elif instr[0][2] == "e":
+            ip += instr[2] if not (reg[instr[1]] % 2) else 0
+        elif instr[0][2] == "o":
+            ip += instr[2] if reg[instr[1]] == 1 else 0
+        else:
+            raise f"Can't execute instruction {instr}!"
+
+        print(f"{oldip+1}: {instr}   a={reg['a']}, b={reg['b']}")
+
+        if oldip == ip:
+            ip += 1
+
+    return int(reg["b"])
+
+
 def prob_1(data: list[str]) -> int:
-    print(data)
-    return 0
+    prog = list(parse(data))
+    return run(prog, {"a": 0, "b": 0}, 0)
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    prog = list(parse(data))
+    return run(prog, {"a": 1, "b": 0}, 0)
 
 
 def main() -> float:
