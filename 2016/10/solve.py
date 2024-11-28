@@ -10,24 +10,37 @@ INPUT = "input.txt"
 PART = 1
 
 
+# TODO: This is all wrong. A bot instruction is not followed until the bot contains
+# 2 chips. Need to either
+# 1) execute the instruction set over and over in a loop until all instructions are used, or
+# 2) index each instruction to its bot, and trigger it to be executed once the bot gains 2 chips
 def prob_1(data: list[str]) -> int:
-    bots = {}
+    bots, outputs = {}, {}
     for line in [ln for ln in data if ln[0] == "v"]:
         tk = line.split()
         bot, value = int(tk[-1]), int(tk[1])
-        print(bot, value)
-        lst = bots.get(bot, [])
-        lst.append(value)
-        bots[bot] = lst
+        bots.setdefault(bot, []).append(value)
     for line in [ln for ln in data if ln[0] == "b"]:
         tk = line.split()
-        bot, low, high = (
+        bot, low, low_is_output, high, high_is_output = (
             int(tk[1]),
-            int(tk[6]) * (-1 if tk[5][0] == "o" else 1),
-            int(tk[-1]) * (-1 if tk[-2][0] == "o" else 1),
+            int(tk[6]),
+            tk[5][0] == "o",
+            int(tk[-1]),
+            tk[-2][0] == "o",
         )
-        print(bot, low, high)
-    # print(bots)
+        if bots.setdefault(bot, []) == []:
+            continue
+        if sorted(bots[bot]) == [17, 61]:  # example: [2, 5]
+            return bot
+        (outputs if low_is_output else bots).setdefault(low, []).append(min(bots[bot]))
+        (outputs if high_is_output else bots).setdefault(high, []).append(
+            max(bots[bot])
+        )
+        bots[bot].clear()
+
+    print("outputs =", outputs)
+    print("bots =", bots)
     return 0
 
 
