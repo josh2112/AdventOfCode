@@ -2,6 +2,7 @@
 
 import argparse
 import time
+import math
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -10,43 +11,58 @@ INPUT = "input.txt"
 PART = 1
 
 
-# TODO: This is all wrong. A bot instruction is not followed until the bot contains
-# 2 chips. Need to either
-# 1) execute the instruction set over and over in a loop until all instructions are used, or
-# 2) index each instruction to its bot, and trigger it to be executed once the bot gains 2 chips
-def prob_1(data: list[str]) -> int:
+def run(data: list[str], chip_search=None):
     bots, outputs = {}, {}
+
+    # Fill bots from the input bins first
     for line in [ln for ln in data if ln[0] == "v"]:
         tk = line.split()
         bot, value = int(tk[-1]), int(tk[1])
         bots.setdefault(bot, []).append(value)
+
+    # Parse instructions
+    # bot -> (low, low_is_output, high, high_is_output)
+    instrs_by_bot = {}
     for line in [ln for ln in data if ln[0] == "b"]:
         tk = line.split()
-        bot, low, low_is_output, high, high_is_output = (
-            int(tk[1]),
+        instrs_by_bot[int(tk[1])] = (
             int(tk[6]),
             tk[5][0] == "o",
             int(tk[-1]),
             tk[-2][0] == "o",
         )
-        if bots.setdefault(bot, []) == []:
-            continue
-        if sorted(bots[bot]) == [17, 61]:  # example: [2, 5]
+
+    # Start with the instructions for any bots with 2 values
+    q = [(b, instrs_by_bot[b]) for b in bots if len(bots[b]) == 2]
+    while q:
+        bot, (low, low_is_output, high, high_is_output) = q.pop(0)
+
+        if sorted(bots[bot]) == chip_search:
             return bot
+
         (outputs if low_is_output else bots).setdefault(low, []).append(min(bots[bot]))
         (outputs if high_is_output else bots).setdefault(high, []).append(
             max(bots[bot])
         )
         bots[bot].clear()
+        del instrs_by_bot[bot]
 
-    print("outputs =", outputs)
-    print("bots =", bots)
-    return 0
+        # Queue up the instructions for any other bots which now have 2 values
+        if not low_is_output and len(bots[low]) == 2:
+            q.append((low, instrs_by_bot[low]))
+        if not high_is_output and len(bots[high]) == 2:
+            q.append((high, instrs_by_bot[high]))
+
+    return outputs
+
+
+def prob_1(data: list[str]) -> int:
+    return run(data, [17, 61])  # example: [2, 5]
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    outputs = run(data)
+    return math.prod(outputs[i][0] for i in range(3))
 
 
 def main() -> float:
