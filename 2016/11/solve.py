@@ -13,7 +13,7 @@ INPUT = "input.ex.txt"
 PART = 1
 
 
-def parse(data: list[str]):
+def parse(data: list[str]) -> list[set[str]]:
     floors = []
     types, i = {}, 0
     for line in data:
@@ -36,19 +36,23 @@ def parse(data: list[str]):
 
 
 def encode(floors):
-    types, i = {}, 0
-    floorcodes = []
-    for f in floors:
-        for t in f:
-            if t[0] not in types:
-                types[t[0]] = ascii_uppercase[i]
-                i += 1
-        floorcodes.append("".join(sorted(types[t[0]] + t[1] for t in f)))
-    return ",".join(floorcodes)
+    chips, gens = {}, {}
+    for i, f in enumerate(floors):
+        for item in f:
+            if item[1] == "M":
+                chips[item[0]] = i
+            else:
+                gens[item[0]] = i
+    return list(sorted((chips[k], gens[k]) for k in chips))
 
 
-def decode(floors):
-    return [set(f[i : i + 2] for i in range(0, len(f), 2)) for f in floors.split(",")]
+def decode(pairs):
+    floors = [set(), set(), set(), set()]
+    for i in range(len(pairs)):
+        ltr = ascii_uppercase[i]
+        floors[pairs[i][0]].add(ltr + "M")
+        floors[pairs[i][1]].add(ltr + "G")
+    return floors
 
 
 def is_floor_valid(floor) -> bool:
@@ -57,72 +61,81 @@ def is_floor_valid(floor) -> bool:
     return not gen or not mc.difference(gen)
 
 
-# Objective: Get everything to the fourth floor
-# Rules:
-#  - Elevator must always have 1 or 2 items (and 1 must always be a microchip)
-#  - A chip cannot be next to a different generator without its corrersponding generator
-def prob_1(data: list[str]) -> int:
-    floors, elev = parse(data), 0
+def run(floors) -> int:
+    elev = 0
 
-    init = (0, elev, encode(floors))
-
-    # DEBUG
-    # init = (3, 1, "AM,BM,AGBG,")
-
-    q = [init]
-    best_state_costs = {q[0][2]: (q[0][0], q[0][1])}
+    q = [(0, elev, encode(floors))]
+    visited = [q[0]]
 
     while q:
         steps, elev, floorcodes = state = heapq.heappop(q)
-        print(f"Unqueueing state {state}")
+        # print(f"From state {state}:")
         floors = decode(floorcodes)
 
-        if not floors[0] and not floors[1] and not floors[2]:
+        if all(f == (3, 3) for f in floorcodes):
             return steps
 
+        nextstates = []
+
         # What can the elevator carry from this floor?
-        possibs = [(x,) for x in floors[elev]] + list(
+        for payload in [(x,) for x in floors[elev]] + list(
             itertools.combinations(floors[elev], 2)
-        )
-        for pld in possibs:
+        ):
             # What floors can this payload go to?
             valid_floors = []
             for f in range(elev + 1, 4):
-                if is_floor_valid(set(pld).union(floors[f])):
+                if is_floor_valid(set(payload).union(floors[f])):
                     valid_floors.append(f)
                 else:
                     break
             for f in range(elev - 1, -1, -1):
-                if is_floor_valid(set(pld).union(floors[f])):
+                if is_floor_valid(set(payload).union(floors[f])):
                     valid_floors.append(f)
                 else:
                     break
-
+            # Make a state for each of the floor/payload combinations
             for dest in valid_floors:
-                result = set(pld).union(floors[dest])
+                result = set(payload).union(floors[dest])
 
                 newfloors = floors.copy()
                 newfloors[dest] = result
-                newfloors[elev] = newfloors[elev].difference(pld)
-                newstate = (steps + abs(dest - elev), dest, encode(newfloors))
+                newfloors[elev] = newfloors[elev].difference(payload)
+                nextstates.append((steps + abs(dest - elev), dest, encode(newfloors)))
 
-                # Skip if we've already been here in the same or fewer steps
-                if (
-                    newstate[2] in best_state_costs
-                    and best_state_costs[newstate[2]][0] <= newstate[0]
-                ):
-                    continue
+        for newstate in nextstates:
+            # Skip if we've already been here (state + elevator position) in the same or fewer steps
+            prior = next(
+                (v for v in visited if v[1:] == newstate[1:]),
+                None,
+            )
+            if prior and prior[0] <= newstate[0]:
+                continue
 
-                print(f"Queueing state {newstate} (take {pld} from {elev} to {dest})")
-                heapq.heappush(q, newstate)
-                best_state_costs[newstate[2]] = (newstate[0], newstate[1])
+            # print(f"  Queueing state {newstate} (take {payload} from {elev} to {dest})")
+            heapq.heappush(q, newstate)
+            if prior:
+                visited.remove(prior)
+            visited.append(newstate)
 
     return 0
+
+
+# Objective: Get everything to the fourth floor
+# Rules:
+#  - Elevator must always have 1 or 2 items
+#  - A chip cannot be exposed to a foreign generator without its generator
+def prob_1(data: list[str]) -> int:
+    floors = parse(data)
+    return run(floors)
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    floors = parse(data)
+    max_ltr = sorted(set(i[0] for f in floors for i in f))[-1]
+    x, y = chr(ord(max_ltr) + 1), chr(ord(max_ltr) + 2)
+    floors[0].update([x + "G", x + "M", y + "G", y + "M"])
+
+    return run(floors)
 
 
 def main() -> float:
