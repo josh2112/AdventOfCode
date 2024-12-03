@@ -1,7 +1,8 @@
-"""https://adventofcode.com/2024/day/2"""
+"""https://adventofcode.com/2024/day/3"""
 
 import argparse
 import time
+import re
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -10,32 +11,25 @@ INPUT = "input.txt"
 PART = 1
 
 
-def is_safe(values: list[int]) -> bool:
-    delta = [a - b for a, b in zip(values, values[1:])]
-    return all(-4 < v < 0 for v in delta) or all(4 > v > 0 for v in delta)
-
-
-def is_safe_dampened(values: list[int], dampened: bool = False) -> bool:
-    if is_safe(values):
-        return True
-    for i in range(len(values)):
-        v = values[:i] + values[i + 1 :]
-        delta = [a - b for a, b in zip(v, v[1:])]
-        if all(-4 < v < 0 for v in delta) or all(4 > v > 0 for v in delta):
-            return True
-    return False
-
-
 def prob_1(data: list[str]) -> int:
-    return len([1 for line in data if is_safe([int(v) for v in line.split()])])
+    return sum(
+        int(m[0]) * int(m[1]) for m in re.findall(r"mul\((\d+),(\d+)\)", "".join(data))
+    )
 
 
 def prob_2(data: list[str]) -> int:
-    return len([1 for line in data if is_safe_dampened([int(v) for v in line.split()])])
+    accum = 0
+    on = True
+    for m in re.findall(r"(mul\((\d+),(\d+)\))|(do\(\))|(don't\(\))", "".join(data)):
+        if on and m[0]:
+            accum += int(m[1]) * int(m[2])
+        else:
+            on = m[3] and not m[4]
+    return accum
 
 
 def main() -> float:
-    parser = argparse.ArgumentParser(description="Solves AoC 2024 day 2.")
+    parser = argparse.ArgumentParser(description="Solves AoC 2024 day 3.")
     parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
     parser.add_argument("-i", "--input", default=INPUT)
     args = parser.parse_args()
