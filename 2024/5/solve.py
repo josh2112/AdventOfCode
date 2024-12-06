@@ -33,14 +33,18 @@ def prob_2(data: list[str]) -> int:
     rules, updates = parse(data)
     accum = 0
     for u in updates:
-        reversed_combos = list(combinations(reversed(u), 2))
-        u = list(u)
-        mistakes = [r for r in rules if r in reversed_combos]
-        for mistake in mistakes:
-            i1, i2 = u.index(mistake[0]), u.index(mistake[1])
-            u[i1], u[i2] = u[i2], u[i1]
-        if mistakes:
-            print("fixed:", u)
+        if any(r in list(combinations(reversed(u), 2)) for r in rules):
+            while True:
+                mistakes = [r for r in rules if r in list(combinations(reversed(u), 2))]
+                if not mistakes:
+                    break
+                u = list(u)
+                for m in mistakes:
+                    i1, i2 = u.index(m[0]), u.index(m[1])
+                    if i1 > i2:
+                        n2 = u.pop(i2)
+                        u.insert(i1, n2)
+            accum += u[len(u) // 2]
 
     return accum
 
