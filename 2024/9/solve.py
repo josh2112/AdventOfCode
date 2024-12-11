@@ -43,7 +43,7 @@ def prob_2(data: list[str]) -> int:
         length = int(v)
         if length:
             if is_file:
-                file.append((start, length, file_id))
+                file.append((file_id, start, length))
                 file_id += 1
             else:
                 free.append((start, length))
@@ -52,14 +52,20 @@ def prob_2(data: list[str]) -> int:
 
     pfile = len(file) - 1
     while pfile >= 0:
-        fstart, flen, fid = file[pfile]
+        fid, fstart, flen = file[pfile]
         pfree = next((pfree for pfree in free if pfree[1] >= flen), None)
+        # Is there a block to the left of the file big enough?
         if pfree and pfree[0] < fstart:
-            file[pfile] = (pfree[0], flen, fid)
+            # Move the file
+            file[pfile] = (fid, pfree[0], flen)
             if pfree[1] == flen:
-                del free[free.index(pfree)]
+                # Remove the free block if the file takes up the whole block
+                free.remove(pfree)
             else:
+                # Shrink the free block down to the remaining free space (file on left, remnants of free block on right)
                 free[free.index(pfree)] = (pfree[0] + flen, pfree[1] - flen)
+
+            # The space where the file was is now free
             free.append((fstart, flen))
 
             file = sorted(file)
@@ -70,11 +76,15 @@ def prob_2(data: list[str]) -> int:
             # Find the index of the new free area in the now-sorted free block list and check the adjacent areas. Can
             # they be combined?
             # TODO: This doesn't change the answer at all. Doubelc check it.
+
+            # Compact free space (e.g. (3,2), (5,1), (6,4) => (3,7))
+
             i = free.index((fstart, flen))
             if i > 0:
                 if free[i - 1][0] + free[i - 1][1] == free[i][0]:
                     free[i] = (free[i - 1][0], free[i - 1][1] + free[i][1])
                     del free[i - 1]
+                    i -= 1
             if i < len(free) - 1:
                 if free[i][0] + free[i][1] == free[i + 1][0]:
                     free[i] = (free[i][0], free[i][1] + free[i + 1][1])
@@ -85,23 +95,9 @@ def prob_2(data: list[str]) -> int:
             # print("free =", free)
         pfile -= 1
 
-    d = sorted(free + [(a, b) for a, b, c in file])
-    for pr in zip(d, d[1:]):
-        if pr[0][0] + pr[0][1] != pr[1][0]:
-            print("non-contiguous!", pr)
-
-    # d = [-1] * sum(f[1] for f in file + free)
-    # for rng in file:
-    #     for i in range(rng[0], rng[0] + rng[1]):
-    #         d[i] = rng[2]
-    # printdisk(d)
-
-    # print("files = ", file)
-    # print("free =", free)
-
     # 9963020502985 is too high? count of file blocks is the same and there are no overlaps or gaps in ranges...
     return sum(
-        sum(i * fid for i in range(fstart, fstart + flen)) for fstart, flen, fid in file
+        sum(i * fid for i in range(fstart, fstart + flen)) for fid, fstart, flen in file
     )
 
 
