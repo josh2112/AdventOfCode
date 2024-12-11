@@ -1,6 +1,7 @@
 """https://adventofcode.com/2024/day/6"""
 
 import argparse
+import pickle
 import time
 
 # Input file path (default is "input.txt")
@@ -42,58 +43,76 @@ def prob_1(data: list[str]) -> int:
 
     while True:
         nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
-        if nxt[0] >= size[0] or nxt[0] < 0 or nxt[1] >= size[1] or nxt[1] < 0:
+        if not (0 <= nxt[0] < size[0] and 0 <= nxt[1] < size[1]):
             break
         if nxt in walls:
             di = (di + 1) % len(DIRS)
         else:
             g = nxt
-            visited.add(nxt)
+            visited.add(g)
 
     return len(visited)
+
+
+def find_cycle(walls, size, g, di, visited):
+    # Put a wall in front of us and turn
+    tmpwall = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
+    if next((p for p, v in visited if p == tmpwall), None):
+        # print("wall cannot be placed at", tmpwall)
+        return None
+
+    di = (di + 1) % len(DIRS)
+
+    projvisited = [(g, di)]
+
+    while True:
+        nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
+
+        if not (0 <= nxt[0] < size[0] and 0 <= nxt[1] < size[1]):
+            # Out of maze? end
+            # print("wall at", tmpwall, "does not cause cycle")
+            return None
+
+        if nxt in walls or nxt == tmpwall:
+            # Hit a wall? Turn
+            di = (di + 1) % len(DIRS)
+            # Have we hit this wall and made this turn before?
+            if (g, di) in visited or (g, di) in projvisited:
+                # print("wall at", tmpwall, "causes cycle at", (g, di))
+                return tmpwall
+        else:
+            g = nxt
+            if (g, di) in visited or (g, di) in projvisited:
+                # print("wall at", tmpwall, "causes cycle at", (g, di))
+                return tmpwall
+            projvisited.append((g, di))
 
 
 def prob_2(data: list[str]) -> int:
     walls, size, g = parse(data)
     di = 0
-    visited = []
+    visited = [(g, di)]
+
+    walls_producing_cycle = set()
 
     while True:
         nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
-        if nxt[0] >= size[0] or nxt[0] < 0 or nxt[1] >= size[1] or nxt[1] < 0:
+
+        if not (0 <= nxt[0] < size[0] and 0 <= nxt[1] < size[1]):
+            # Out of maze? end
             break
 
         if nxt in walls:
+            # Hit a wall? Turn and record new vector
             di = (di + 1) % len(DIRS)
         else:
+            # TODO: Wall cannot be placed on an existing path? Otherwise the guard will never get to it?
+            if w := find_cycle(walls, size, g, di, visited):
+                walls_producing_cycle.add(w)
             g = nxt
-            visited.append((nxt, di))
+            visited.append((g, di))
 
-    tmpwallpos = set()
-
-    for i in range(len(visited) - 1, 0, -1):
-        print(i)
-        vold = visited[: i - 1]
-        vnew = []
-        tmpwall = visited[i][0]
-        g, di = visited[i - 1]
-        while True:
-            nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
-            if nxt[0] >= size[0] or nxt[0] < 0 or nxt[1] >= size[1] or nxt[1] < 0:
-                break
-
-            if nxt in walls or nxt == tmpwall:
-                di = (di + 1) % len(DIRS)
-            else:
-                g = nxt
-                if (nxt, di) in vold or (nxt, di) in vnew:
-                    tmpwallpos.add(tmpwall)
-                    break
-                vnew.append((nxt, di))
-
-    # 1822 and 1821 are too high
-    # 1715 also too high
-    return len(tmpwallpos)
+    return len(walls_producing_cycle)
 
 
 def main() -> float:
