@@ -24,6 +24,17 @@ def parse(data: list[str]):
     return walls, (len(data[0]), len(data)), guard
 
 
+def printmaze(walls, size, visited):
+    dchr = "^>v<"
+    maze = [["."] * size[0] for i in range(size[1])]
+    for w in walls:
+        maze[w[1]][w[0]] = "#"
+    for p, d in visited:
+        maze[p[1]][p[0]] = dchr[d]
+    for line in maze:
+        print("".join(line))
+
+
 def prob_1(data: list[str]) -> int:
     walls, size, g = parse(data)
     di = 0
@@ -43,8 +54,46 @@ def prob_1(data: list[str]) -> int:
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    walls, size, g = parse(data)
+    di = 0
+    visited = []
+
+    while True:
+        nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
+        if nxt[0] >= size[0] or nxt[0] < 0 or nxt[1] >= size[1] or nxt[1] < 0:
+            break
+
+        if nxt in walls:
+            di = (di + 1) % len(DIRS)
+        else:
+            g = nxt
+            visited.append((nxt, di))
+
+    tmpwallpos = set()
+
+    for i in range(len(visited) - 1, 0, -1):
+        print(i)
+        vold = visited[: i - 1]
+        vnew = []
+        tmpwall = visited[i][0]
+        g, di = visited[i - 1]
+        while True:
+            nxt = (g[0] + DIRS[di][0], g[1] + DIRS[di][1])
+            if nxt[0] >= size[0] or nxt[0] < 0 or nxt[1] >= size[1] or nxt[1] < 0:
+                break
+
+            if nxt in walls or nxt == tmpwall:
+                di = (di + 1) % len(DIRS)
+            else:
+                g = nxt
+                if (nxt, di) in vold or (nxt, di) in vnew:
+                    tmpwallpos.add(tmpwall)
+                    break
+                vnew.append((nxt, di))
+
+    # 1822 and 1821 are too high
+    # 1715 also too high
+    return len(tmpwallpos)
 
 
 def main() -> float:
