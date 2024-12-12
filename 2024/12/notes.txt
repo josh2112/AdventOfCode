@@ -1,0 +1,28 @@
+PART 2
+------
+
+ +-+
+ |A|E
+ + +-+
+ |B C|
+ +-+ +
+  F|D|
+   +-+
+
+num sides = num corners
+num convex corners = num contiguous borders - 1
+ - A and D have 3 contiguous borders, so 2 + 2 = 4 corners
+ - B and C have 2 contiguous borders, so 1 + 1 = 2 corners
+ num concave borders = num different diagonals between adjacent neighbors
+  - B has 2 adjacent neighbors (A and C) with a different diagonal (E) so 1 corner
+  - C has 2 adjacent neighbors (B and D) with a different diagonal (F) so 1 corner
+sum = 8 corners
+
++-+-+
+|B B|
++   +
+|B B|
++-+-+
+
+each B has 2 contiguous borders, so 1 * 4 = 4
+no concave borders (each B has 2 adjacent neighbors, but diagonal is also B)
