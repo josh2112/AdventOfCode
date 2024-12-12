@@ -46,12 +46,54 @@ def flood_fill(garden, x, y, pid):
     return area, perimeter
 
 
-def segment(garden):
+def flood_fill_sides(garden, x, y, pid):
+    ltr = garden[y][x][0]
+    q = [(x, y)]
+    area, num_sides = 0, 0
+    while q:
+        p = q.pop(0)
+        area += 1
+        garden[p[1]][p[0]][1] = pid
+        # List of
+        neighbors = [
+            garden[p[1] + d[1]][p[0] + d[0]][0] == ltr
+            for d in (
+                (0, -1),
+                (1, -1),
+                (1, 0),
+                (1, 1),
+                (0, 1),
+                (-1, 1),
+                (-1, 0),
+                (-1, -1),
+            )
+        ]
+        outside = sum(
+            1 if not (neighbors[a] or neighbors[b]) else 0
+            for a, b in ((0, 2), (2, 4), (4, 6), (6, 0))
+        )
+        inside = sum(
+            1 if neighbors[a] and neighbors[b] and not neighbors[c] else 0
+            for a, b, c in ((0, 2, 1), (2, 4, 3), (4, 6, 5), (6, 0, 7))
+        )
+        num_sides += outside + inside
+
+        for n in [
+            (p[0] + d[0], p[1] + d[1]) for d in ((-1, 0), (1, 0), (0, -1), (0, 1))
+        ]:
+            if n not in q and garden[n[1]][n[0]] == [ltr, -1]:
+                q.append(n)
+
+    # print(f"{ltr} {(x,y)}: area {area}, {num_sides} sides")
+    return area, num_sides
+
+
+def segment(garden, fill_algo):
     num_plots = 0
     price = 0
     for x, y in griditer(1, len(garden[0]) - 1, 1, len(garden) - 1):
         if garden[y][x][1] == -1:
-            a, p = flood_fill(garden, x, y, num_plots)
+            a, p = fill_algo(garden, x, y, num_plots)
             price += a * p
             num_plots += 1
     return price
@@ -59,12 +101,12 @@ def segment(garden):
 
 def prob_1(data: list[str]) -> int:
     garden = parse(data)
-    return segment(garden)
+    return segment(garden, flood_fill)
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    garden = parse(data)
+    return segment(garden, flood_fill_sides)
 
 
 def main() -> float:
