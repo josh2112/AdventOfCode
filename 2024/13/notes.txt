@@ -1,0 +1,27 @@
+Button A: X+94, Y+34    t=94, u=34
+Button B: X+22, Y+67    v=22, w=67
+Prize: X=8400, Y=5400   x=8400, y=5400
+
+94a + 22b = 8400
+34a + 67b = 5400
+
+a = 8400/94 - 22b/94
+34*(8400/94 - 22b/94) + 67b = 5400
+34*8400/94 - 34*22*b/94 + 67b = 5400
+67b - 34*22*b/94 = 5400 - 34*8400/94
+
+ta + vb = x
+ua + wb = y
+a = x/t - vb/t
+u(x/t - vb/t) + wb = y
+ux/t - uvb/t + wb = y
+wb - uvb/t = y - ux/t
+b(w-uv/t) = y - ux/t
+b = (y-ux/t)/(w-uv/t)
+
+part 2:
+84574267114767 is too high
+
+43715829121957 is too low (discarding if rounding error > 1/10000000000000)
+
+82261957837868
