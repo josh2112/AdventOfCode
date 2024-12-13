@@ -2,6 +2,7 @@
 
 import argparse
 import time
+from collections import Counter
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -10,64 +11,34 @@ INPUT = "input.txt"
 PART = 1
 
 
-def prob_1(data: list[str]) -> int:
-    stones = data[0].split()
+def solve(data: list[str], blinks: int) -> int:
+    stonecounts = Counter(data[0].split())
 
-    for n in range(25):
-        i = 0
-        while i < len(stones):
-            if stones[i] == "0":
-                stones[i] = "1"
-                i += 1
-            elif not (len(stones[i]) % 2):
-                v = stones[i]
-                stones[i] = str(int(v[: len(v) // 2]))
-                stones.insert(i + 1, str(int(v[len(v) // 2 :])))
-                i += 2
+    for n in range(blinks):
+        newcounts = Counter()
+        for s in stonecounts:
+            # 0 becomes 1
+            if s == "0":
+                newcounts["1"] += stonecounts[s]
+            # even numbers are split in half
+            elif not (len(s) % 2):
+                half = len(s) // 2
+                newcounts[str(int(s[:half]))] += stonecounts[s]
+                newcounts[str(int(s[half:]))] += stonecounts[s]
+            # all others are multiplied by 2024
             else:
-                stones[i] = str(int(stones[i]) * 2024)
-                i += 1
+                newcounts[str(int(s) * 2024)] += stonecounts[s]
+        stonecounts = newcounts
 
-        print(f"{n+1}: {len(stones)}")
-        if n < 5:
-            print(" ".join(stones))
+    return len(stonecounts)
 
-    return len(stones)
+
+def prob_1(data: list[str]) -> int:
+    return solve(data, 25)
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
-
-
-"""
-i: num stones
-1: 11
-2: 15
-3: 20
-4: 35
-5: 52
-6: 78
-7: 126
-8: 178
-9: 254
-10: 415
-11: 660
-12: 967
-13: 1406
-14: 2185
-15: 3411
-16: 5017
-17: 7689
-18: 11739
-19: 17556
-20: 26894
-21: 40984
-22: 62552
-23: 94101
-24: 141879
-25: 218956
-"""
+    return solve(data, 75)
 
 
 def main() -> float:
