@@ -38,7 +38,7 @@ class Node:
     prev: "Node|None" = None
 
 
-def prob_1(data: list[str], part2: bool = False) -> int:
+def prob_1(data: list[str]) -> int:
     size, walls, start, end = parse(data)
 
     root = Node(start, (1, 0))
@@ -87,6 +87,8 @@ def prob_1(data: list[str], part2: bool = False) -> int:
 def prob_2(data: list[str]) -> int:
     size, walls, start, end = parse(data)
 
+    best_cost = prob_1(data)
+
     root = Node(start, (1, 0))
 
     q = [(0, root)]
@@ -124,7 +126,9 @@ def prob_2(data: list[str]) -> int:
             ):
                 c1 = c0 + 1000
                 # Import change from part 1: <= here, since there are multiple best paths
-                if (p0, d1) not in visited or c1 <= visited[(p0, d1)]:
+                if c1 < best_cost and (
+                    (p0, d1) not in visited or c1 <= visited[(p0, d1)]
+                ):
                     # print(f" * can turn {ARROWS[d1]} for total cost {c1}")
                     n1 = Node(p0, d1, n0)
                     heappush(q, (c1, n1))
@@ -133,7 +137,7 @@ def prob_2(data: list[str]) -> int:
         if p1 not in walls and 0 <= p1[0] < size[0] and 0 <= p1[1] < size[1]:
             c1 = c0 + 1
             # Import change from part 1: <= here, since there are multiple best paths
-            if (p1, d0) not in visited or c1 <= visited[(p1, d0)]:
+            if c1 < best_cost and ((p1, d0) not in visited or c1 <= visited[(p1, d0)]):
                 # print(f" * can move to {p1} for total cost {c1}")
                 n1 = Node(p1, d0, n0)
                 heappush(q, (c1, n1))
