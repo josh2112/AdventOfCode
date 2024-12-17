@@ -1,0 +1,26 @@
+PART 2
+------
+
+Program: 2,4,1,1,7,5,4,4,1,4,0,3,5,5,3,0
+
+bst 4  =>  B = A % 8
+bxl 1  =>  B = B ^ 1
+cdv 5  =>  C = A / 2^B
+bxc 4  =>  B = B ^ C
+bxl 4  =>  B = B ^ 4
+adv 3  =>  A = A / 8
+out B  =>  out B % 8
+jnz 0  =>  if A != 0: jump to beginning
+
+
+B = A % 8    (keep first 3 bits)
+B = B ^ 1    (invert last bit)
+C = A // 2^B
+B = B ^ C
+B = B ^ 4
+A = A // 8
+out B % 8
+if A != 0: jump to beginning
+
+* program needs to run 16 times (i.e. at end A != 0 15 times, then A = 0)
+* A is // by 8 every time, so A has to be at least 8^15 to start
