@@ -37,8 +37,6 @@ def run(regs, prog, target=None):
                 regs[1] ^= regs[2]
             case 5:  # out
                 out.append(cmb(op) % 8)
-                if target and target[: len(out)] != out:
-                    return out
             case 6:  # bdv
                 regs[1] = regs[0] // pow(2, cmb(op))
             case 7:  # cdv
@@ -49,24 +47,27 @@ def run(regs, prog, target=None):
 
 
 def prob_1(data: list[str]) -> int:
-    regs, prog = parse(data)
-    return ",".join(str(v) for v in run(regs, prog))
+    return ",".join(str(v) for v in run(*parse(data)))
 
 
 def prob_2(data: list[str]) -> int:
-    regs_orig, prog = parse(data)
-    a, out = pow(8, 15) - 1, []
+    (_, b, c), prog = parse(data)
 
-    while out != prog:
-        a += 1_000
-        regs = regs_orig.copy()
-        regs[0] = a
-        out = run(regs, prog, prog)
+    q = [[]]
 
-        if out[0] == prog[0]:
-            print(a, out)
+    while True:
+        octets = q.pop(0)
+        A = 0
+        for v in octets:
+            A = (A + v) << 3
 
-    return a
+        if len(octets) == len(prog):
+            return A >> 3
+
+        tgt = prog[-len(octets) - 1 :]
+        poss = [i for i in range(8) if tgt == run({0: A + i, 1: b, 2: c}, prog)]
+        for p in poss:
+            q.append(octets + [p])
 
 
 def main() -> float:

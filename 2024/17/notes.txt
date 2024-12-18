@@ -1,7 +1,7 @@
 PART 2
 ------
 
-Program: 2,4,1,1,7,5,4,4,1,4,0,3,5,5,3,0
+Program: 2, 4, 1, 1, 7, 5, 4, 4, 1, 4, 0, 3, 5, 5, 3, 0
 
 bst 4  =>  B = A % 8
 bxl 1  =>  B = B ^ 1
@@ -13,14 +13,28 @@ out B  =>  out B % 8
 jnz 0  =>  if A != 0: jump to beginning
 
 
-B = A % 8    (keep first 3 bits)
-B = B ^ 1    (invert last bit)
-C = A // 2^B
+B = A % 8
+B = Last 3 bits of A (repeats 0,1,2,3,4,5,6,7)
+
+B = B ^ 1
+Invert last bit of B (repeats 1,0,3,2,5,4,7,6)
+
+C = A // pow(2,B)
+C = A >> B (enormous A with last 7 bits cut off)
+
 B = B ^ C
+B = C with some combination of last 3 bits inverted
+
 B = B ^ 4
+Invert 3rd from last bit of B
+
 A = A // 8
 out B % 8
 if A != 0: jump to beginning
 
 * program needs to run 16 times (i.e. at end A != 0 15 times, then A = 0)
-* A is // by 8 every time, so A has to be at least 8^15 to start
+* A is // by 8 every time, so 8^15 <= A < 8^16
+
+-----------------------------------------------------------------------------------------
+* New approach * solve digits from end
+running with A=5 produces 0 (last digit)
