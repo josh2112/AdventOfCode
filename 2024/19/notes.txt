@@ -1,0 +1,2 @@
+First, make the available towel set as small as possible - get rid of towels that can be made from other towels
+Order by size, then just have to remove towels that can be made of smaller towels
