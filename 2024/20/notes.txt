@@ -1,0 +1,15 @@
+Part 1:
+Run Dijkstra backwards - 'visited' is then a dict of locations with their distance from end.
+For each point p1 in visited:
+  For each wall around that point:
+    For each point p2 around that wall:
+      If p2 distance-to-end (from visited) is more than 2 greater than p1 distance-to-end:
+        this is a valid cheat, cost saved = diff - 2
+
+Modification for part 2:
+  For each point p1 in visited:
+    For each valid point p2 that is 20 or less away from p1:
+      If visited[p2] is more than dist(p2->p1) greater than visited[p1]:
+        this is a valid cheat, cost saved = diff - dist(p2->p1)
+
+Might also even adapt that to part 2, just with points exactly 2 away instead of 1-20

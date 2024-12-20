@@ -1,10 +1,8 @@
 """https://adventofcode.com/2024/day/19"""
 
 import argparse
-import heapq
 import time
-from itertools import repeat
-from multiprocessing import Pool
+from functools import cache
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -13,58 +11,27 @@ INPUT = "input.txt"
 PART = 2
 
 
-def is_possible(towels: list[str], pattern: str) -> bool:
-    q = [0]
-    length = len(pattern)
-
-    # print(f"Evaluating {pattern}:")
-
-    # Remove towels that can't appear in the pattern?
-    origlen = len(towels)
-    towels = [t for t in towels if t in pattern]
-    # print(f" - Eliminated {origlen-len(towels)} of {origlen} towels")
-
-    while q:
-        n0 = heapq.heappop(q)
-        if n0 == -length:
-            print("Yes")
-            return True
-
-        rem = pattern[-n0:]
-        # lenrem = len(rem)
-
-        for t in towels:
-            lent = len(t)
-            if rem[:lent] == t:
-                heapq.heappush(q, n0 - lent)
-        if len(q) > 30:
-            print("(too complex)")
-            return False
-
-    print("no")
-    return False
+@cache
+def count_possibilities(towels: tuple[str, ...], pattern: str) -> int:
+    return (
+        1
+        if not pattern
+        else sum(
+            count_possibilities(towels, pattern[len(t) :])
+            for t in towels
+            if pattern.startswith(t)
+        )
+    )
 
 
 def prob_1(data: list[str]) -> int:
-    towels, patterns = data[0].split(", "), data[2:]
-
-    towels.sort(key=lambda p: len(p))
-    towels = set(towels).difference(
-        towels[i] for i in range(len(towels)) if is_possible(towels[:i], towels[i])
-    )
-
-    towels = sorted(towels, key=lambda p: -len(p))
-
-    return sum(1 if is_possible(towels, p) else 0 for p in patterns)
+    towels, patterns = tuple(data[0].split(", ")), data[2:]
+    return len([p for p in patterns if count_possibilities(towels, p)])
 
 
 def prob_2(data: list[str]) -> int:
-    towels, patterns = data[0].split(", "), data[2:]
-    towels = sorted(towels, key=lambda p: -len(p))
-
-    # Pool().starmap(is_possible, zip(repeat(towels, len(patterns)), patterns))
-
-    return sum(1 if is_possible(towels, p) else 0 for p in patterns)
+    towels, patterns = tuple(data[0].split(", ")), data[2:]
+    return sum(count_possibilities(towels, p) for p in patterns)
 
 
 def main() -> float:
