@@ -1,7 +1,6 @@
 """https://adventofcode.com/2024/day/20"""
 
 import argparse
-import heapq
 import time
 from collections import Counter
 
@@ -28,7 +27,7 @@ def parse(data: list[str]):
     )
 
 
-def prob_1(data: list[str], criteria: int) -> int:
+def solve(data: list[str], criteria: int, cheat_min: int, cheat_max: int) -> int:
     grid, start, end = parse(data)
 
     p, c = end, 0
@@ -45,19 +44,26 @@ def prob_1(data: list[str], criteria: int) -> int:
 
     tally = Counter()
 
+    # This works (1027501) but takes a little over 7 seconds...
     for p in visited:
-        for w in neighbors(p):
-            if grid[w[1]][w[0]] == "#":
-                for p2 in neighbors(w):
-                    if p2 in visited and (sav := visited[p2] - visited[p] - 2) > 0:
-                        tally[sav] += 1
+        for p2 in visited:
+            if (
+                (dx := abs(p[0] - p2[0])) <= cheat_max
+                and (dy := abs(p[1] - p2[1])) <= cheat_max
+                and cheat_min <= dx + dy <= cheat_max
+            ):
+                if (sav := visited[p2] - visited[p] - dx - dy) > 0:
+                    tally[sav] += 1
 
     return sum(cnt for save, cnt in tally.items() if save >= criteria)
 
 
-def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+def prob_1(data: list[str], criteria: int) -> int:
+    return solve(data, criteria, 2, 2)
+
+
+def prob_2(data: list[str], criteria: int) -> int:
+    return solve(data, criteria, 2, 20)
 
 
 def main() -> float:
