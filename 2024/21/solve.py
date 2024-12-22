@@ -18,7 +18,7 @@ def neighbors(p):
 
 
 @cache
-def shortest_path(grid, start, end) -> list[tuple[int, int]]:
+def shortest_path(grid, start, end, resort: str) -> list[tuple[int, int]]:
     q = [(0, start, [])]  # cost, cur, path
     visited = {start: 0}  # loc: cost
     w, h = len(grid[0]), len(grid)
@@ -26,7 +26,7 @@ def shortest_path(grid, start, end) -> list[tuple[int, int]]:
     while q:
         c, p, path = heapq.heappop(q)
         if p == end:
-            return path
+            return sorted(path, key=lambda c: resort.index(c))
         c1 = c + 1
         for p1, d1 in neighbors(p):
             if (
@@ -40,36 +40,41 @@ def shortest_path(grid, start, end) -> list[tuple[int, int]]:
                 heapq.heappush(q, (c1, p1, path + [d1]))
 
 
+def solve(start, code, keygrid, keymap, resort) -> tuple[str, ...]:
+    p = start
+    path = []
+    for key in code:
+        p1 = keymap[key]
+        path += shortest_path(keygrid, p, p1, resort) + ["A"]
+        p = p1
+    return p, path
+
+
 def prob_1(data: list[str]) -> int:
     kp_door = ("789", "456", "123", " 0A")
     kp_bot = (" ^A", "<v>")
 
-    keys_door = {c: (x, y) for y, row in enumerate(kp_door) for x, c in enumerate(row)}
-    keys_bot = {c: (x, y) for y, row in enumerate(kp_bot) for x, c in enumerate(row)}
+    keys_door, keys_bot = tuple(
+        {c: (x, y) for y, row in enumerate(kp) for x, c in enumerate(row)}
+        for kp in (kp_door, kp_bot)
+    )
 
-    d = (2, 3)
-    d_path = []
-    for code in data[:1]:
-        for key in code:
-            d1 = keys_door[key]
-            d_path += shortest_path(kp_door, d, d1) + ["A"]
-            d = d1
+    door_finger = keys_door["A"]
+    bot_fingers = [keys_bot["A"]] * 3
 
-    b0 = (2, 0)
-    b0_path = []
-    for key in d_path:
-        nxt = keys_bot[key]
-        b0_path += shortest_path(kp_bot, b0, nxt) + ["A"]
-        b0 = nxt
+    for code in data:
+        bot_paths = [()] * (len(bot_fingers) + 1)
 
-    b1 = (2, 0)
-    b1_path = []
-    for key in b0_path:
-        nxt = keys_bot[key]
-        b1_path += shortest_path(kp_bot, b1, nxt) + ["A"]
-        b1 = nxt
+        door_finger, bot_paths[0] = solve(door_finger, code, kp_door, keys_door, ">v<^")
 
-    return "".join(b1_path), len(b1_path)
+        for i in range(len(bot_fingers)):
+            bot_fingers[i], bot_paths[i + 1] = solve(
+                bot_fingers[i], bot_paths[i], kp_bot, keys_bot, ">^v<"
+            )
+
+        for p in reversed(bot_paths[:-1]):
+            print("".join(p) + f" ({len(p)})")
+        print(code)
 
 
 def prob_2(data: list[str]) -> int:

@@ -1,0 +1,31 @@
+Example 029A:
+-------------
+<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A (68)
+v<<A>>^A<A>AvA<^AA>A<vAAA>^A (28)
+<A^A>^^AvvvA (12)
+
+My result:
+<v<A>A<A>^>AvA<^Av>A^A<v<A>^>AvA^A<v<A>^>AA<vA>A^A<A>A<v<A>A^>AAA<Av>A^A (72)
+<v<A>^>A<A>A<AAv>A^A<vAAA^>A (28)
+<A^A^^>AvvvA (12)
+
+Problem: "stairstepping"  ex: "<v<" instead of "<<v"
+the next robot in line has to change buttons twice instead of once
+could group the button presses together, i.e. break up and sort sequences between the A's, but how to make sure that a gap isn't passed?
+ * for the numeric keypad, do all > before v and do all ^ before <
+ * for the directionl keypad, do all > before ^ and all v before <
+
+
+Example:
+029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A (68)
+980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A         (60)
+179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A (68)
+456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A     (64)
+379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A     (64)
+
+# Mine: too short for 3 & 4 - are they going through blank spaces?
+v<A<AA>>^AvAA^<A>Av<<A>>^AvA^Av<A>^A<Av<A>>^AAvA^Av<A<A>>^AAAvA^<A>A (68)
+v<<A>>^AAAvA^Av<A<AA>>^AvAA^<A>Av<A<A>>^AAAvA^<A>Av<A>^A<A>A (60)
+v<A<AA>>^AAvA^<A>AvA^Av<<A>>^AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A (64)
+v<A<AA>>^AAvA^<A>AAvA^Av<A>^A<A>Av<A>^A<A>Av<A<A>>^AAvA^<A>A (60)
+v<<A>>^AvA^Av<A<AA>>^AAvA^<A>AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A (64)
