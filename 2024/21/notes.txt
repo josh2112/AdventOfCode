@@ -29,3 +29,49 @@ v<<A>>^AAAvA^Av<A<AA>>^AvAA^<A>Av<A<A>>^AAAvA^<A>Av<A>^A<A>A (60)
 v<A<AA>>^AAvA^<A>AvA^Av<<A>>^AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A (64)
 v<A<AA>>^AAvA^<A>AAvA^Av<A>^A<A>Av<A>^A<A>Av<A<A>>^AAvA^<A>A (60)
 v<<A>>^AvA^Av<A<AA>>^AAvA^<A>AAvA^Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A (64)
+
+
+Real 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+              <   A > A  v <<
+My 379A:   v<<A>>^AvA^Av<<A>>^AAv<A<A>>^AAvAA^<A>Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A
+              <   A > A   <   AA
+
+
+From example:
+checking: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+results in: <A>Av<<AA>^AA>AvAA^A<vAAA>^A
+checking: <A>Av<<AA>^AA>AvAA^A<vAAA>^A
+results in: ^A<<^^A>>AvvvA
+checking: ^A<<^^A>>AvvvA
+results in: 379A
+
+From mine:
+checking: v<<A>>^AvA^Av<<A>>^AAv<A<A>>^AAvAA^<A>Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A
+results in: <A>A<AAv<AA>>^AvAA^Av<AAA>^A
+checking: <A>A<AAv<AA>>^AvAA^Av<AAA>^A
+results in: ^A^^<<A>>AvvvA
+checking: ^A^^<<A>>AvvvA
+results in: 379A
+
+mine:
+  v<<A>>^AvA^Av<<A>>^AAv<A<A>>^AAvAA^<A>Av<A>^AA<A>Av<A<A>>^AAAvA^<A>A  (68)
+     <   A > A   <   AA  v <   AA >>  ^ A  v  AA ^ A  v <   AAA >  ^ A
+         ^   A       ^^        <<       A     >>   A        vvv      A
+             3                          7          9                 A
+
+theirs:
+  <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A      (64)
+     <   A > A  v <<   AA >  ^ AA > A  v  AA ^ A   < v  AAA >  ^ A
+         ^   A         <<      ^^   A     >>   A        vvv      A
+             3                      7          9                 A
+
+3 -> 7
+ theirs uses this sequence: '  v <<   AA >  ^ AA > A      which results in 23 presses
+ mine uses this sequence:   '   <   AA  v <   AA >>  ^ A  which results in 27 presses
+
+ for each movement on door keypad (A->3, 3->7, 7->9, etc.) calculate all valid paths (avoiding " ")
+  - x2:
+    - for each of those valid paths, calculate valid path, keeping only the lowest ones
+
+theirs:     <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+mine (new): <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
