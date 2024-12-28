@@ -3,6 +3,7 @@
 import argparse
 import itertools
 import time
+from collections import defaultdict
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -29,17 +30,38 @@ def prob_1(data: list[str]) -> int:
     return len(groups)
 
 
+def bron_kerbosch(R: set, P: set, X: set, N, cliques: list):
+    if not P and not X:
+        if len(R) > 2:
+            cliques.append(R)
+        return
+
+    _, u = max(P.union(X), key=lambda v: len(N[v]))
+
+    for v in P.difference(N[u]):
+        bron_kerbosch(
+            R.union({v}),
+            P.intersection(N[v]),
+            X.intersection(N[v]),
+            N,
+            cliques,
+        )
+        P.remove(v)
+        X.add(v)
+
+
 def prob_2(data: list[str]) -> int:
     edges = [(line[0:2], line[3:5]) for line in data]
-    computers = set(c for e in edges for c in e)
-    edges += [(e[1], e[0]) for e in edges]
 
-    conns = {}
-    for c in computers:
-        pals = [e[1] for e in edges if e[0] == c]
-        print(c, ":", pals)
+    G = defaultdict(set)
+    for e in edges:
+        G[e[0]].add(e[1])
+        G[e[1]].add(e[0])
 
-    return 0
+    cliques = []
+    bron_kerbosch(set(), set(G.keys()), set(), G, cliques)
+
+    return ",".join(sorted(max(cliques, key=lambda g: len(g))))
 
 
 def main() -> float:
