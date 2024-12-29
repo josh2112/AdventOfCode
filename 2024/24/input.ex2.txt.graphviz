@@ -1,0 +1,152 @@
+graph g {
+  rankdir="LR";
+
+  node [shape=circle];
+
+  ntg -- n0;
+  fgs -- n0;
+  n0 -- mjb
+  y02 -- n1;
+  x01 -- n1;
+  n1 -- tnw
+  kwq -- n2;
+  kpj -- n2;
+  n2 -- z05
+  x00 -- n3;
+  x03 -- n3;
+  n3 -- fst
+  tgd -- n4;
+  rvg -- n4;
+  n4 -- z01
+  vdt -- n5;
+  tnw -- n5;
+  n5 -- bfw
+  bfw -- n6;
+  frj -- n6;
+  n6 -- z10
+  ffh -- n7;
+  nrd -- n7;
+  n7 -- bqk
+  y00 -- n8;
+  y03 -- n8;
+  n8 -- djm
+  y03 -- n9;
+  y00 -- n9;
+  n9 -- psh
+  bqk -- n10;
+  frj -- n10;
+  n10 -- z08
+  tnw -- n11;
+  fst -- n11;
+  n11 -- frj
+  gnj -- n12;
+  tgd -- n12;
+  n12 -- z11
+  bfw -- n13;
+  mjb -- n13;
+  n13 -- z00
+  x03 -- n14;
+  x00 -- n14;
+  n14 -- vdt
+  gnj -- n15;
+  wpb -- n15;
+  n15 -- z02
+  x04 -- n16;
+  y00 -- n16;
+  n16 -- kjc
+  djm -- n17;
+  pbm -- n17;
+  n17 -- qhw
+  nrd -- n18;
+  vdt -- n18;
+  n18 -- hwm
+  kjc -- n19;
+  fst -- n19;
+  n19 -- rvg
+  y04 -- n20;
+  y02 -- n20;
+  n20 -- fgs
+  y01 -- n21;
+  x02 -- n21;
+  n21 -- pbm
+  ntg -- n22;
+  kjc -- n22;
+  n22 -- kwq
+  psh -- n23;
+  fgs -- n23;
+  n23 -- tgd
+  qhw -- n24;
+  tgd -- n24;
+  n24 -- z09
+  pbm -- n25;
+  djm -- n25;
+  n25 -- kpj
+  x03 -- n26;
+  y03 -- n26;
+  n26 -- ffh
+  x00 -- n27;
+  y04 -- n27;
+  n27 -- ntg
+  bfw -- n28;
+  bqk -- n28;
+  n28 -- z06
+  nrd -- n29;
+  fgs -- n29;
+  n29 -- wpb
+  frj -- n30;
+  qhw -- n30;
+  n30 -- z04
+  bqk -- n31;
+  frj -- n31;
+  n31 -- z07
+  y03 -- n32;
+  x01 -- n32;
+  n32 -- nrd
+  hwm -- n33;
+  bqk -- n33;
+  n33 -- z03
+  tgd -- n34;
+  rvg -- n34;
+  n34 -- z12
+  tnw -- n35;
+  pbm -- n35;
+  n35 -- gnj
+
+  n0 [label=XOR,shape=box];
+  n1 [label=OR,shape=box];
+  n2 [label=OR,shape=box];
+  n3 [label=OR,shape=box];
+  n4 [label=XOR,shape=box];
+  n5 [label=OR,shape=box];
+  n6 [label=AND,shape=box];
+  n7 [label=OR,shape=box];
+  n8 [label=AND,shape=box];
+  n9 [label=OR,shape=box];
+  n10 [label=OR,shape=box];
+  n11 [label=OR,shape=box];
+  n12 [label=AND,shape=box];
+  n13 [label=XOR,shape=box];
+  n14 [label=OR,shape=box];
+  n15 [label=AND,shape=box];
+  n16 [label=AND,shape=box];
+  n17 [label=OR,shape=box];
+  n18 [label=AND,shape=box];
+  n19 [label=AND,shape=box];
+  n20 [label=OR,shape=box];
+  n21 [label=AND,shape=box];
+  n22 [label=OR,shape=box];
+  n23 [label=XOR,shape=box];
+  n24 [label=XOR,shape=box];
+  n25 [label=OR,shape=box];
+  n26 [label=XOR,shape=box];
+  n27 [label=XOR,shape=box];
+  n28 [label=OR,shape=box];
+  n29 [label=XOR,shape=box];
+  n30 [label=XOR,shape=box];
+  n31 [label=OR,shape=box];
+  n32 [label=OR,shape=box];
+  n33 [label=AND,shape=box];
+  n34 [label=XOR,shape=box];
+  n35 [label=OR,shape=box];
+  
+}
