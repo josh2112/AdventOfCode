@@ -5,7 +5,10 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations
-import random
+from operator import __and__ as AND
+from operator import add as ADD
+
+from more_itertools import set_partitions
 
 # Input file path (default is "input.txt")
 INPUT = "input.ex3.txt"
@@ -42,20 +45,28 @@ class Gate:
 
 def run(gates, wires, changed_names):
     q = [g for g in gates if any(w.name in changed_names for w in (g.i1, g.i2, g.out))]
+    changed_outputs = []
+    iters = 0
     while q:
         changed_names = set()
         for g in q:
             a, b = g.i1.value, g.i2.value
-            g.out.value = (
-                a & b if g.op[0] == "A" else (a | b if g.op[0] == "O" else a ^ b)
-            )
-            changed_names.add(g.out.name)
+            tmp = a & b if g.op[0] == "A" else (a | b if g.op[0] == "O" else a ^ b)
+            if tmp != g.out.value:
+                changed_outputs.append((g.out, g.out.value))
+                g.out.value = tmp
+                changed_names.add(g.out.name)
 
         q = [
             g for g in gates if g.i1.name in changed_names or g.i2.name in changed_names
         ]
+        iters += 1
+        # Dumb loop prevention: if we've looped more than 64 times (more than enough to recompute the whole thing,
+        # assume we're created a loop
+        if iters > 64:
+            return -1, changed_outputs
 
-    return get_output(wires, "z")
+    return get_output(wires, "z"), changed_outputs
 
 
 def parse(data: list[str]):
@@ -73,7 +84,7 @@ def parse(data: list[str]):
 def prob_1(data: list[str]) -> int:
     gates, wires = parse(data)
     changed = [n for n in wires.keys() if n[0] != "z"]
-    return run(gates, wires, changed)
+    return run(gates, wires, changed)[0]
 
 
 def set_input(wires: dict[Wire], ltr, value):
@@ -94,76 +105,76 @@ def clr_input(inputs, ltr):
         inputs[w].value = -1
 
 
-def do_example(gates, wires):
+def prob_2(data: list[str]) -> int:
+    gates, wires = parse(data)
+
+    # Example:
+    # bag_size, op = 4, AND
+
+    # Real input:
+    bag_size, op = 8, ADD
+
     x, y = 37, 22
     set_input(wires, "x", x)
     set_input(wires, "y", y)
-    z = run(gates, wires, [n for n in wires.keys() if n[0] != "z"])
+    run(gates, wires, [n for n in wires.keys() if n[0] != "z"])
 
-    sw_prev = []
-
-    outputs = sorted(g.out.name for g in gates)
+    outputs = [g.out.name for g in gates]
 
     candidates = []
 
-    # Find all candiate swaps (those that give correct result with the preset X and Y)
-    for sw in combinations(outputs, 4):
-        sg = {g.out.name: g for g in gates if g.out.name in sw}
-        a, b, c, d = sw
-        for sw in [(a, b, c, d), (a, c, b, d), (a, d, b, c)]:
-            a, b, c, d = sw
-            sg[a].out, sg[b].out = sg[b].out, sg[a].out
-            sg[c].out, sg[d].out = sg[d].out, sg[c].out
-            z = run(gates, wires, set(sw).union(set(sw_prev)))
-            if z == x & y:
-                candidates.append(sw)
-            # reset
-            sg[a].out, sg[b].out = sg[b].out, sg[a].out
-            sg[c].out, sg[d].out = sg[d].out, sg[c].out
-            sw_prev = sw
+    print("generating combos...")
+    combos_to_try = (
+        [w for pr in x for w in pr]
+        for combo in combinations(outputs, bag_size)
+        for x in set_partitions(combo, bag_size // 2, 2, 2)
+    )
 
-    # Reset
-    run(gates, wires, sw_prev)
+    i = 1
+
+    # Find all candidate swaps (those that give correct result with the preset X and Y)
+    for sw in combos_to_try:
+        if not i % 1000:
+            print(i)
+        i += 1
+        sg = {g.out.name: g for g in gates if g.out.name in sw}
+        # Do the swaps
+        for pr in range(0, len(sw), 2):
+            sg[sw[pr]].out, sg[sw[pr + 1]].out = sg[sw[pr + 1]].out, sg[sw[pr]].out
+        z, changed_outputs = run(gates, wires, sw)
+        if z == op(x, y):
+            print("Found candidate:", sw)
+            candidates.append(sw)
+        # reset
+        for pr in range(0, len(sw), 2):
+            sg[sw[pr]].out, sg[sw[pr + 1]].out = sg[sw[pr + 1]].out, sg[sw[pr]].out
+        for w, v in changed_outputs:
+            w.value = v
 
     # Test each candidate with 100 random y's
     ywires = [w for w in wires if w[0] == "y"]
     for sw in candidates:
         print("Testing", sw)
         sg = {g.out.name: g for g in gates if g.out.name in sw}
-        a, b, c, d = sw
-        sg[a].out, sg[b].out = sg[b].out, sg[a].out
-        sg[c].out, sg[d].out = sg[d].out, sg[c].out
-        run(gates, wires, sw)
+        for pr in range(0, len(sw), 2):
+            sg[sw[pr]].out, sg[sw[pr + 1]].out = sg[sw[pr + 1]].out, sg[sw[pr]].out
         is_bad = False
         for y in range(2 ** len(ywires)):
             set_input(wires, "y", y)
-            z = run(gates, wires, ywires)
-            if z != x & y:
+            z, changed_outputs = run(gates, wires, ywires)
+            if z != op(x, y):
                 is_bad = True
                 print("failed at y =", y)
+                for pr in range(0, len(sw), 2):
+                    sg[sw[pr]].out, sg[sw[pr + 1]].out = (
+                        sg[sw[pr + 1]].out,
+                        sg[sw[pr]].out,
+                    )
+                for w, v in changed_outputs:
+                    w.value = v
                 break
         if not is_bad:
-            return sw
-
-
-def prob_2(data: list[str]) -> int:
-    gates, wires = parse(data)
-
-    return do_example(gates, wires)
-
-    # 0 + 31 = 31
-    # 0 + 32 = 64  BAD
-    # but also... ?
-    # 31 + 0 = 31
-    # 32 + 0 = 64  BAD
-
-    for y, x in combinations(range(100), 2):
-        set_input(wires, "x", x)
-        set_input(wires, "y", y)
-        z = run(gates, wires, [n for n in wires.keys() if n[0] != "z"])
-        print(f"{x} & {y} = {z}  {'' if z == x&y else 'BAD'}")
-
-    return 0
+            return ",".join(sorted(sw))
 
 
 def main() -> float:
