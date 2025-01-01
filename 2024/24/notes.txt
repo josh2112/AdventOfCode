@@ -1,0 +1,24 @@
+Alternative approach:
+
+Look at each adder component, identifying the inputs (xXX, yXX and carry in) and the
+outputs (zXX and carry out). Test the 8 possible input values and see if the outputs are correct. If
+not, one of the 5 (I think?) gate outputs is switched.
+
+How to figure out the I/O of each adder?
+Ex. for 3rd bit, inputs are x02, y02 and ktr (carry in), and outputs are z02 and vmr (carry out)
+
+Half adder (first bit):
+* x00 and y00 must go into an AND (a) and an XOR (b)
+* the output of a is the carry out
+* the output of b is z00
+Half adder: find all gates connected to xX and yX. There should be 2.
+
+Full adder (second bit and up:)
+* xX and yX must go into an AND (a) and an XOR (b)
+* b must go into an AND (c) and an XOR (d)
+* the other intput to c and d is the carry in
+* the output of d is zX
+* the output of c is ORd (e) with the output of a to produce the carry out
+Full adder: find all gates connected to xX and yX. Then find all gates connected to those gates.
+  There should be 5 in all. lvl 1 AND, XOR... lvl2 AND, XOR, OR
+

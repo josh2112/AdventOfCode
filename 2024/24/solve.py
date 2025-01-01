@@ -5,10 +5,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations
-from operator import __and__ as AND
-from operator import __or__ as OR
-from operator import __xor__ as XOR
-from operator import add as ADD
+from operator import __and__ as AND, __or__ as OR, __xor__ as XOR, add as ADD
 from typing import Callable
 
 from more_itertools import set_partitions
