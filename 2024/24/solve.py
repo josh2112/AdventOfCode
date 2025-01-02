@@ -93,18 +93,21 @@ class Circuit:
 
 def prob_1(data: list[str]) -> int:
     c = Circuit.parse(data)
-    inputs = c.xwires + c.ywires
 
-    q = [g for g in c.gates if g.i1 in inputs or g.i2 in inputs]
-    gates_remaining = [g for g in c.gates if g not in q]
+    q = [g for g in c.gates if g.i1.value >= 0 and g.i2.value >= 0]
 
     while q:
-        cur = q.pop(0)
-        cur.run()
-        for nxt in [g for g in c.gates if cur.out in (g.i1, g.i2)]:
-            if nxt in gates_remaining and nxt.i1.value >= 0 and nxt.i2.value >= 0:
-                gates_remaining.remove(nxt)
-                q.append(nxt)
+        for g in q:
+            g.run()
+
+        outputs = [g.out for g in q]
+        q = [
+            nxt
+            for nxt in c.gates
+            if (nxt.i1 in outputs or nxt.i2 in outputs)
+            and nxt.i1.value >= 0
+            and nxt.i2.value >= 0
+        ]
 
     return c.get_z()
 
@@ -119,7 +122,7 @@ def verify_adder(ci, wx, wy, co, wz, l1_gates: list[Gate], l2_gates: list[Gate])
     # L2 AND: output should be L2 OR:
     if not l2_gates[0].outputs_to([l2_gates[1]]):
         yield l2_gates[0]
-    # L2 OR should not be wz (very specific???)
+    # L2 OR should not be wz (to catch 1 edge case)
     if l2_gates[1].out == wz:
         yield l2_gates[1]
     # L2 XOR outputs to wz
