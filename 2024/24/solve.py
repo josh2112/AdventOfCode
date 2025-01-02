@@ -3,7 +3,7 @@
 import argparse
 import time
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from operator import __and__, __or__, __xor__
 from typing import Callable
 
@@ -25,19 +25,10 @@ class keydefaultdict(defaultdict):
 @dataclass
 class Wire:
     name: str
-    value: int
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, value):
-        return self.name == value
+    value: int = field(hash=False)
 
     def __lt__(self, other):
         return self.name < other.name
-
-    def __str__(self) -> str:
-        return f"{self.name} - {self.value}"
 
 
 @dataclass
@@ -56,9 +47,6 @@ class Gate:
 
     def run(self) -> bool:
         self.out.value = self.op(self.i1.value, self.i2.value)
-
-    def __str__(self) -> str:
-        return f"{self.i1.name} {self.opname} {self.i2.name} -> {self.out.name}"
 
 
 class Circuit:
@@ -139,9 +127,8 @@ def prob_2(data: list[str]) -> int:
         key=lambda g: g.opname,
     )
     co = gates[0].out  # First gate should be AND, its output is the carry-out
-    # test_adder(Wire("[dummy carry-in]", 0), wx, wy, co, wz, gates, [])
 
-    possibilities = []
+    bad_gates = []
 
     for i, wx in enumerate(c.xwires[1:]):
         wy, wz = c.ywires[i + 1], c.zwires[i + 1]
@@ -166,10 +153,10 @@ def prob_2(data: list[str]) -> int:
             )
 
         ci, co = co, l2_gates[1].out  # This should be OR?
-        # test_adder(ci, wx, wy, co, wz, l1_gates, l2_gates)
-        possibilities += verify_adder(ci, wx, wy, co, wz, l1_gates, l2_gates)
 
-    return ",".join(sorted(g.out.name for g in possibilities))
+        bad_gates += verify_adder(ci, wx, wy, co, wz, l1_gates, l2_gates)
+
+    return ",".join(sorted(g.out.name for g in bad_gates))
 
 
 def main() -> float:
