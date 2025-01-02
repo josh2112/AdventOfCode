@@ -16,7 +16,7 @@ Half adder: find all gates connected to xX and yX. There should be 2.
 Full adder (second bit and up:)
 * xX and yX must go into an AND (a) and an XOR (b)
 * b must go into an AND (c) and an XOR (d)
-* the other intput to c and d is the carry in
+* the other input to c and d is the carry in
 * the output of d is zX
 * the output of c is ORd (e) with the output of a to produce the carry out
 Full adder: find all gates connected to xX and yX. Then find all gates connected to those gates.

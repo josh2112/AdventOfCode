@@ -4,17 +4,13 @@ import argparse
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from itertools import combinations
-from operator import __and__ as AND, __or__ as OR, __xor__ as XOR, add as ADD
+from operator import __and__, __or__, __xor__
 from typing import Callable
 
-from more_itertools import set_partitions
-
-# Input file path (default is "input.txt")
-INPUT = "input.txt"
-
 # Part to solve, 1 or 2
-PART = 2
+PART = 1
+
+OPMAP = {"AND": __and__, "OR": __or__, "XOR": __xor__}
 
 
 class keydefaultdict(defaultdict):
@@ -40,20 +36,50 @@ class Wire:
     def __lt__(self, other):
         return self.name < other.name
 
+    def __str__(self) -> str:
+        return f"{self.name} - {self.value}"
+
 
 @dataclass
 class Gate:
     i1: Wire
     i2: Wire
     op: Callable[[int, int], int]
+    opname: str
     out: Wire
 
+    def inputs_from(self, gates) -> bool:
+        return any(g.out in (self.i1, self.i2) for g in gates)
+
+    def outputs_to(self, gates) -> bool:
+        return all(self.out in (g.i1, g.i2) for g in gates)
+
+    def run(self) -> bool:
+        self.out.value = self.op(self.i1.value, self.i2.value)
+
     def __str__(self) -> str:
-        return f"{self.i1.name} {self.op} {self.i2.name} -> {self.out.name}"
+        return f"{self.i1.name} {self.opname} {self.i2.name} -> {self.out.name}"
 
 
-# TODO: TEST all, then start using?
-class Device:
+class Circuit:
+    @classmethod
+    def parse(cls, data: list[str]):
+        split = data.index("")
+        wires = keydefaultdict(
+            lambda w: Wire(w, -1),
+            {
+                w: Wire(w, int(v))
+                for w, v in [line.split(": ") for line in data[:split]]
+            },
+        )
+        return Circuit(
+            [
+                Gate(wires[i1], wires[i2], OPMAP[op], op, wires[out])
+                for i1, op, i2, _, out in [line.split() for line in data[split + 1 :]]
+            ],
+            wires,
+        )
+
     def __init__(self, gates, wires):
         self.gates, self.wires = gates, wires
         sw = sorted(w for w in wires.values())
@@ -61,175 +87,93 @@ class Device:
             [w for w in sw if w.name[0] == ltr] for ltr in "xyz"
         ]
 
-    def set_x(self, value):
-        for i, b in enumerate(reversed(f"{value:0{len(self.xwires)}b}")):
-            self.xwires[i].value = int(b)
-
-    def set_y(self, value):
-        for i, b in enumerate(reversed(f"{value:0{len(self.ywires)}b}")):
-            self.ywires[i].value = int(b)
-
     def get_z(self):
         return sum(w.value << i for i, w in enumerate(self.zwires))
 
 
-def parse(data: list[str]):
-    split = data.index("")
-    wires = keydefaultdict(
-        lambda w: Wire(w, -1),
-        {w: Wire(w, int(v)) for w, v in [line.split(": ") for line in data[:split]]},
-    )
-    opmap = {"A": AND, "O": OR, "X": XOR}
-    return [
-        Gate(wires[i1], wires[i2], opmap[op[0]], wires[out])
-        for i1, op, i2, _, out in [line.split() for line in data[split + 1 :]]
-    ], wires
-
-
-def run(gates, wires, changed_wires):
-    q = [
-        g
-        for g in gates
-        if g.i1 in changed_wires or g.i2 in changed_wires or g.out in changed_wires
-    ]
-    orig_outputs = dict()
-    iters = 0
-    while q:
-        changed_wires = set()
-        for g in q:
-            if (tmp := g.op(g.i1.value, g.i2.value)) != g.out.value:
-                if g.out not in orig_outputs:
-                    orig_outputs[g.out] = g.out.value
-                g.out.value = tmp
-                changed_wires.add(g.out)
-
-        q = [g for g in gates if g.i1 in changed_wires or g.i2 in changed_wires]
-        iters += 1
-        # Dumb loop prevention: if we've looped more than 64 times (more than enough to recompute the whole thing,
-        # assume we're created a loop
-        if iters > 64:
-            print("loop detected")
-            return orig_outputs
-
-    return orig_outputs
-
-
 def prob_1(data: list[str]) -> int:
-    gates, wires = parse(data)
-    changed = [w for n, w in wires.items() if n[0] != "z"]
-    run(gates, wires, changed)
-    return sum(
-        w.value << i
-        for i, w in enumerate(sorted(w for w in wires.values() if w.name[0] == "z"))
-    )
+    c = Circuit.parse(data)
+    inputs = c.xwires + c.ywires
+
+    q = [g for g in c.gates if g.i1 in inputs or g.i2 in inputs]
+    gates_remaining = [g for g in c.gates if g not in q]
+
+    while q:
+        cur = q.pop(0)
+        cur.run()
+        for nxt in [g for g in c.gates if cur.out in (g.i1, g.i2)]:
+            if nxt in gates_remaining and nxt.i1.value >= 0 and nxt.i2.value >= 0:
+                gates_remaining.remove(nxt)
+                q.append(nxt)
+
+    return c.get_z()
 
 
-def set_input(wires: dict[Wire], ltr, value):
-    inwires = sorted((w for n, w in wires.items() if n[0] == ltr), key=lambda w: w.name)
-    for i, b in enumerate(reversed(f"{value:0{len(inwires)}b}")):
-        inwires[i].value = int(b)
-
-
-def clr_input(inputs, ltr):
-    for w in [w for w in inputs if w[0] == ltr]:
-        inputs[w].value = -1
-
-
-def gather_candidates(gates, wires, gates_by_output, x, y):
-    bag_size, op = (4, AND) if "ex" in INPUT else (8, ADD)
-    candidates = []
-
-    combos_to_try = (
-        [n for pr in x for n in pr]
-        for combo in combinations(gates_by_output.keys(), bag_size)
-        for x in set_partitions(combo, bag_size // 2, 2, 2)
-    )
-
-    zwires = sorted(w for w in wires.values() if w.name[0] == "z")
-
-    def get_z():
-        return sum(w.value << i for i, w in enumerate(zwires))
-
-    i = 1
-
-    with open("candidates.txt", "w") as f:
-        f.write("---\n")
-
-    # Find all candidate swaps (those that give correct result with the preset X and Y)
-    for sw in combos_to_try:
-        if not i % 1000:
-            print(i)
-        i += 1
-        sg = [gates_by_output[w] for w in sw]
-        # Do the swaps
-        for pr in range(0, len(sg), 2):
-            sg[pr].out, sg[pr + 1].out = sg[pr + 1].out, sg[pr].out
-        changed_outputs = run(gates, wires, sw)
-        if get_z() == op(x, y):
-            print("Found candidate:", sw)
-            with open("candidates.txt", "a") as f:
-                f.write(",".join(w.name for w in sw) + "\n")
-            candidates.append(sw)
-        # reset
-        for pr in range(0, len(sg), 2):
-            sg[pr].out, sg[pr + 1].out = sg[pr + 1].out, sg[pr].out
-        for w, v in changed_outputs.items():
-            w.value = v
-
-    return candidates
+def verify_adder(ci, wx, wy, co, wz, l1_gates: list[Gate], l2_gates: list[Gate]):
+    # L1 AND: output should be input of L2 OR
+    if not l1_gates[0].outputs_to([l2_gates[1]]):
+        yield l1_gates[0]
+    # L1 XOR: output should be input of L2 AND and OR
+    if not l1_gates[1].outputs_to([l2_gates[0], l2_gates[-1]]):
+        yield l1_gates[1]
+    # L2 AND: output should be L2 OR:
+    if not l2_gates[0].outputs_to([l2_gates[1]]):
+        yield l2_gates[0]
+    # L2 OR should not be wz (very specific???)
+    if l2_gates[1].out == wz:
+        yield l2_gates[1]
+    # L2 XOR outputs to wz
+    if l2_gates[2].out != wz:
+        yield l2_gates[2]
 
 
 def prob_2(data: list[str]) -> int:
-    gates, wires = parse(data)
+    c = Circuit.parse(data)
 
-    zwires = sorted(w for w in wires.values() if w.name[0] == "z")
+    wx, wy, wz = c.xwires[0], c.ywires[0], c.zwires[0]
+    gates = sorted(
+        (g for g in c.gates if g.i1 in (wx, wy) or g.i2 in (wx, wy)),
+        key=lambda g: g.opname,
+    )
+    co = gates[0].out  # First gate should be AND, its output is the carry-out
+    # test_adder(Wire("[dummy carry-in]", 0), wx, wy, co, wz, gates, [])
 
-    def get_z():
-        return sum(w.value << i for i, w in enumerate(zwires))
+    possibilities = []
 
-    bag_size, op = (4, AND) if "ex" in INPUT else (8, ADD)
+    for i, wx in enumerate(c.xwires[1:]):
+        wy, wz = c.ywires[i + 1], c.zwires[i + 1]
+        l1_gates = sorted(
+            (g for g in c.gates if g.i1 in (wx, wy) or g.i2 in (wx, wy)),
+            key=lambda g: g.opname,
+        )
 
-    x, y = 37, 22
-    set_input(wires, "x", x)
-    set_input(wires, "y", y)
-    run(gates, wires, [w for w in wires.values() if w.name[0] != "z"])
+        l2_gates = sorted(
+            (g for g in c.gates if g.inputs_from(l1_gates)),
+            key=lambda g: g.opname,
+        )
+        if len(l2_gates) < 3:
+            l2_gates += [g for g in c.gates if g.inputs_from(l2_gates)]
+            l2_gates = sorted(
+                (
+                    g
+                    for g in l2_gates
+                    if g.out.name in set(g.out.name for g in l2_gates)
+                ),
+                key=lambda g: g.opname,
+            )
 
-    gates_by_output = {g.out: g for g in gates}
+        ci, co = co, l2_gates[1].out  # This should be OR?
+        # test_adder(ci, wx, wy, co, wz, l1_gates, l2_gates)
+        possibilities += verify_adder(ci, wx, wy, co, wz, l1_gates, l2_gates)
 
-    candidates = gather_candidates(gates, wires, gates_by_output, x, y)
-
-    # Test each candidate with 100 random y's
-    ywires = [w for w in wires.values() if w.name[0] == "y"]
-    for sw in candidates:
-        print("Testing", sw)
-        sg = [gates_by_output[w] for w in sw]
-        for pr in range(0, len(sg), 2):
-            sg[pr].out, sg[pr + 1].out = sg[pr + 1].out, sg[pr].out
-        is_bad = False
-        for y in range(2 ** len(ywires)):
-            set_input(wires, "y", y)
-            changed_outputs = run(gates, wires, ywires)
-            if get_z() != op(x, y):
-                is_bad = True
-                print("failed at y =", y)
-                for pr in range(0, len(sg), 2):
-                    sg[pr].out, sg[pr + 1].out = sg[pr + 1].out, sg[pr].out
-                for w, v in changed_outputs.items():
-                    w.value = v
-                break
-        if not is_bad:
-            return ",".join(sorted([w.name for w in sw]))
+    return ",".join(sorted(g.out.name for g in possibilities))
 
 
 def main() -> float:
-    global INPUT
     parser = argparse.ArgumentParser(description="Solves AoC 2024 day 24.")
     parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
-    parser.add_argument("-i", "--input", default=INPUT)
     args = parser.parse_args()
-    part, infile = args.part, args.input
-
-    INPUT = infile
+    part, infile = args.part, "input.txt"
 
     with open(infile, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
