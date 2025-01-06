@@ -2,13 +2,11 @@
 
 import argparse
 import heapq
-import itertools
 import time
-from collections import defaultdict
 from functools import cache
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Part to solve, 1 or 2
 PART = 2
@@ -22,7 +20,7 @@ def neighbors(p):
 
 
 @cache
-def best_paths(grid, start, end):
+def best_paths(grid, start: tuple[int, int], end: tuple[int, int]):
     q = [(0, start, [])]  # cost, cur, path
     w, h = len(grid[0]), len(grid)
 
@@ -43,127 +41,49 @@ def best_paths(grid, start, end):
     return best_paths
 
 
+def dfs(codes, depth):
+    grid_door = ("789", "456", "123", " 0A")
+    grid_bot = (" ^A", "<v>")
+
+    keymap_door, keymap_bot = tuple(
+        {c: (x, y) for y, row in enumerate(kp) for x, c in enumerate(row)}
+        for kp in (grid_door, grid_bot)
+    )
+
+    @cache
+    def calc(path, depth):
+        if depth == 0:
+            return len(path)
+        else:
+            return sum(
+                min(
+                    calc(tuple(p), depth - 1)
+                    for p in best_paths(grid_bot, *[keymap_bot[k] for k in pr])
+                )
+                for pr in zip(["A"] + list(path), path)
+            )
+
+    complexity = 0
+
+    for code in codes:
+        cost = 0
+        for pr in zip(["A"] + [c for c in code], code):
+            cost += min(
+                calc(tuple(p), depth)
+                for p in best_paths(grid_door, *[keymap_door[k] for k in pr])
+            )
+        # print(f"Code {code}: {cost}")
+        complexity += cost * int(code[:-1])
+
+    return complexity
+
+
 def prob_1(data: list[str]) -> int:
-    grid_door = ("789", "456", "123", " 0A")
-    grid_bot = (" ^A", "<v>")
-
-    keymap_door, keymap_bot = tuple(
-        {c: (x, y) for y, row in enumerate(kp) for x, c in enumerate(row)}
-        for kp in (grid_door, grid_bot)
-    )
-
-    complexity = 0
-
-    for code in data:
-        totalseq = ""
-
-        for kp_move in zip(["A"] + [x for x in code], code):
-            minseq = None
-            for p in best_paths(
-                grid_door, keymap_door[kp_move[0]], keymap_door[kp_move[1]]
-            ):
-                p2 = [
-                    best_paths(grid_bot, keymap_bot[pr[0]], keymap_bot[pr[1]])
-                    for pr in zip(["A"] + p, p)
-                ]
-                p3_minseq = None
-                for p2ex in itertools.product(*p2):
-                    # print("  ", "".join(x for a in combo for x in a))
-                    p2ex = [x for a in p2ex for x in a]
-                    p3 = [
-                        best_paths(grid_bot, keymap_bot[pr[0]], keymap_bot[pr[1]])
-                        for pr in zip(["A"] + p2ex, p2ex)
-                    ]
-                    p3_seq = [
-                        [x for a in p3ex for x in a] for p3ex in itertools.product(*p3)
-                    ]
-                    x = min(len(x) for x in p3_seq)
-                    if not p3_minseq or x < len(p3_minseq):
-                        p3_minseq = p3_seq[0]
-                if not minseq or len(p3_minseq) < len(minseq):
-                    minseq = p3_minseq
-            totalseq += "".join(minseq)
-
-        print(code, ": ", totalseq, len(totalseq))
-        complexity += len(totalseq) * int(code[:-1])
-    return complexity
+    return dfs(data, 2)
 
 
-def calc_next_level_seqs(p2_seq, grid_bot, keymap_bot):
-    p3_seqs = []
-    for p2ex in p2_seq:
-        p3 = [
-            best_paths(grid_bot, keymap_bot[pr[0]], keymap_bot[pr[1]])
-            for pr in zip(["A"] + p2ex, p2ex)
-        ]
-        length = sum(len(x[0]) if x else 0 for x in p3)
-        if not p3_seqs or length < len(p3_seqs[0]):
-            p3_seqs = [[x for a in p3ex for x in a] for p3ex in itertools.product(*p3)]
-    return p3_seqs
-
-
-# TODO: This is all a mess
 def prob_2(data: list[str]) -> int:
-    grid_door = ("789", "456", "123", " 0A")
-    grid_bot = (" ^A", "<v>")
-
-    keymap_door, keymap_bot = tuple(
-        {c: (x, y) for y, row in enumerate(kp) for x, c in enumerate(row)}
-        for kp in (grid_door, grid_bot)
-    )
-
-    complexity = 0
-
-    for code in data:
-        totalseq = ""
-
-        p0_seq = [
-            [kp_move[0], kp_move[1]] for kp_move in zip(["A"] + [x for x in code], code)
-        ]
-        for s in p0_seq:
-            print("".join(s))
-
-        p1_seq = calc_next_level_seqs(p0_seq, grid_door, keymap_door)
-        for s in p1_seq:
-            print("".join(s))
-        continue
-
-        p1 = [
-            best_paths(grid_door, keymap_door[kp_move[0]], keymap_door[kp_move[1]])
-            for kp_move in zip(["A"] + [x for x in code], code)
-        ]
-        # p1_seq = Shortest possible valid sequences for typing the door code
-        p1_seq = [[x for a in p1ex for x in a] for p1ex in itertools.product(*p1)]
-
-        p2_seq = calc_next_level_seqs(p1_seq, grid_bot, keymap_bot)
-
-        p3_seq = calc_next_level_seqs(p2_seq, grid_bot, keymap_bot)
-
-        for s in p3_seq:
-            print("".join(s))
-        return
-
-        for kp_move in zip(["A"] + [x for x in code], code):
-            minseq = None
-            for p1 in best_paths(
-                grid_door, keymap_door[kp_move[0]], keymap_door[kp_move[1]]
-            ):
-                p2 = [
-                    best_paths(grid_bot, keymap_bot[pr[0]], keymap_bot[pr[1]])
-                    for pr in zip(["A"] + p1, p1)
-                ]
-                p2_seq = [
-                    [x for a in p2ex for x in a] for p2ex in itertools.product(*p2)
-                ]
-
-                p3_minseqs = calc_next_level_seqs(p2_seq, grid_bot, keymap_bot)
-                if not minseq or len(p3_minseqs[0]) < len(minseq):
-                    minseq = p3_minseqs[0]
-            totalseq += "".join(minseq)
-
-        print(code, ": ", totalseq, len(totalseq))
-        complexity += len(totalseq) * int(code[:-1])
-    return complexity
+    return dfs(data, 25)
 
 
 def main() -> float:
