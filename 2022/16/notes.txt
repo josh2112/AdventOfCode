@@ -1,0 +1,26 @@
+possible strategy for part 2:
+
+we have 2 agents, working separately, but they must not open the same valve(s)
+
+for agent 1: iteratively build possible paths, stopping when we're out of time
+for each of those paths:
+    for agent 2: iteratively build possible paths out of the rest
+
+GOT PART 2: Takes 629 seconds to finish but by god it finishes!
+
+New best: 1779: AA EJ UP OW GL, AA XN VR AH HZ JF VO
+New best: 1871: AA EJ UP OW JF VO, AA XN GL VR AH HZ SE
+New best: 1883: AA EJ UP OW VO, AA XN GL VR AH HZ JF
+New best: 1947: AA EJ UP OW AR, AA XN GL VR AH HZ JF VO
+New best: 1962: AA EJ OW UP AR, AA XN GL VR AH HZ JF VO
+New best: 1975: AA EJ OW AR UP, AA XN GL VR AH HZ JF VO
+New best: 2074: AA EJ AR UP OW JF, AA XN GL VR AH HZ VO
+New best: 2082: AA EJ AR UP OW VO, AA XN GL VR AH HZ JF
+New best: 2108: AA EJ AR OW UP UM, AA XN GL VR AH HZ JF VO
+New best: 2160: AA UP EJ AR OW UM, AA XN GL VR AH HZ JF VO
+New best: 2161: AA UP EJ AR OW VO, AA XN GL VR AH HZ JF
+New best: 2212: AA UP OW AR EJ UM, AA XN GL VR AH HZ JF VO
+New best: 2215: AA UP AR EJ OW UM, AA XN GL VR AH HZ JF VO
+New best: 2216: AA UP AR EJ OW VO, AA XN GL VR AH HZ JF
+Part 2: 2216
+Time: 629.850245699985 s
