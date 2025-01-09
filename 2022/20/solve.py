@@ -34,63 +34,29 @@ def print_nodes(node: Node, cnt: int):
     print()
 
 
-def mix1(nodes: list[Node]):
-    print_nodes(nodes[0], len(nodes))
-    for n in nodes:
-        if n.num == 0:
-            continue
-        n.prev.next, n.next.prev = n.next, n.prev
-        dest = n
-        if n.num > 0:
-            for i in range(n.num):
-                dest = dest.next
-            n.prev, n.next = dest, dest.next
-            dest.next.prev, dest.next = n, n
-        elif n.num < 0:
-            for i in range(-n.num):
-                dest = dest.prev
-            n.prev, n.next = dest.prev, dest
-            dest.prev.next, dest.prev = n, n
-        print(n.num, " ->")
-        print_nodes(nodes[0], len(nodes))
-    return nodes
-
-
 def mix2(nodes: list[Node]):
-    print_nodes(nodes[0], len(nodes))
+    length = len(nodes) - 1
     for n in nodes:
-        if n.num == 0:
-            continue
-        d = (n.num % len(nodes)) - (1 if n.num < 0 else 0)
+        d = n.num % length
         if d == 0:
-            if n.num < 0:
-                print(n.num, "(0) ->")
-                print_nodes(nodes[0], len(nodes))
-                continue
-            else:
-                d += 1
-        if d < 0:
-            d += len(nodes) + 1
-        print(f"{n.num} results in {d}")
+            continue
         n.prev.next, n.next.prev = n.next, n.prev
         dest = n
         for i in range(d):
             dest = dest.next
         n.prev, n.next = dest, dest.next
         dest.next.prev, dest.next = n, n
-        print(n.num, " ->")
-        print_nodes(nodes[0], len(nodes))
     return nodes
 
 
 def coords(nodes: list[Node]) -> int:
     node = next(n for n in nodes if n.num == 0)
-    values = []
+    result = 0
     for j in range(3):
         for i in range(1000):
             node = node.next
-        values.append(node.num)
-    return sum(values)
+        result += node.num
+    return result
 
 
 def prob_1(data: list[str]) -> int:
@@ -102,15 +68,10 @@ def prob_2(data: list[str]) -> int:
     for n in nodes:
         n.num *= 811589153
 
-    # for i in range(10):
-    mix1(nodes)
-    node = next(n for n in nodes if n.num == 0)
-    values = []
-    for j in range(3):
-        for i in range(1000):
-            node = node.next
-        values.append(node.num)
-    return sum(values)
+    for i in range(10):
+        mix2(nodes)
+
+    return coords(nodes)
 
 
 def main() -> float:
