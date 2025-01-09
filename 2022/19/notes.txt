@@ -1,1 +1,8 @@
-Robots: ore -> clay -> obsidian -> geode
+Blueprint 2: Getting 30, should be 31
+
+at t=26, getting 5, correct
+at t=27, getting 7, should be 8
+
+at time=25, both app include a state res = [20, 31, 4, 3], bots = [3, 6, 3, 2]... but this leads to only 7
+
+The "other" app has a state t=1 (time=26), res=[23, 40, 4, 5], bots=[4, 8, 4, 3]
