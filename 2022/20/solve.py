@@ -18,8 +18,8 @@ class Node:
     next: "Node"
 
 
-def parse(data: list[str]) -> list[Node]:
-    nodes = [Node(int(v), None, None) for v in data]
+def parse(data: list[str], factor: int = 1) -> list[Node]:
+    nodes = [Node(int(v) * factor, None, None) for v in data]
     for i in range(len(nodes)):
         nodes[i].prev = nodes[(i - 1) % len(nodes)]
         nodes[i].next = nodes[(i + 1) % len(nodes)]
@@ -34,24 +34,24 @@ def print_nodes(node: Node, cnt: int):
     print()
 
 
-def mix2(nodes: list[Node]):
+def mix(nodes: list[Node], rounds: int = 1):
     length = len(nodes) - 1
-    for n in nodes:
-        d = n.num % length
-        if d == 0:
-            continue
-        n.prev.next, n.next.prev = n.next, n.prev
-        dest = n
-        for i in range(d):
-            dest = dest.next
-        n.prev, n.next = dest, dest.next
-        dest.next.prev, dest.next = n, n
+    for r in range(rounds):
+        for n in nodes:
+            d = n.num % length
+            if d == 0:
+                continue
+            n.prev.next, n.next.prev = n.next, n.prev
+            dest = n
+            for i in range(d):
+                dest = dest.next
+            n.prev, n.next = dest, dest.next
+            dest.next.prev, dest.next = n, n
     return nodes
 
 
 def coords(nodes: list[Node]) -> int:
-    node = next(n for n in nodes if n.num == 0)
-    result = 0
+    result, node = 0, next(n for n in nodes if n.num == 0)
     for j in range(3):
         for i in range(1000):
             node = node.next
@@ -60,18 +60,11 @@ def coords(nodes: list[Node]) -> int:
 
 
 def prob_1(data: list[str]) -> int:
-    return coords(mix2(parse(data)))
+    return coords(mix(parse(data)))
 
 
 def prob_2(data: list[str]) -> int:
-    nodes = parse(data)
-    for n in nodes:
-        n.num *= 811589153
-
-    for i in range(10):
-        mix2(nodes)
-
-    return coords(nodes)
+    return coords(mix(parse(data, 811589153), 10))
 
 
 def main() -> float:
