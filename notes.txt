@@ -1,0 +1,1 @@
+2022 day 19 works but runs horribly slow.
