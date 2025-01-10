@@ -9,15 +9,11 @@ INPUT = "input.txt"
 # Part to solve, 1 or 2
 PART = 1
 
-TRAPS = [list(cfg) for cfg in ("^^.", ".^^", "^..", "..^")]
-
 
 def generate_rows(r1: list[str], cnt: int):
     for i in range(cnt):
-        r0 = r1
-        r0.insert(0, ".")
-        r0.insert(len(r0), ".")
-        r1 = ["^" if r0[i : i + 3] in TRAPS else "." for i in range(len(r0) - 2)]
+        r0 = ["."] + r1 + ["."]
+        r1 = ["^" if r0[i] != r0[i + 2] else "." for i in range(len(r0) - 2)]
         yield r1
 
 
