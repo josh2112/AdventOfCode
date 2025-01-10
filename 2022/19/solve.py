@@ -150,7 +150,8 @@ def prob_1(data: list[str]) -> int:
 
 
 def prob_2(data: list[str]) -> int:
-    return math.prod(geode_count(b, 32) for b in parse(data))
+    # TODO: This takes over 13 minutes. Can we do better?
+    return math.prod(geode_count(b, 32) for b in parse(data)[:3])
 
 
 def main() -> float:
