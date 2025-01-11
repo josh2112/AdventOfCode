@@ -17,7 +17,7 @@ class Elf:
     next: "Elf"
 
 
-def white_elephant(num_elves: int) -> int:
+def white_elephant_adj(num_elves: int) -> int:
     elves = [Elf(i + 1, None) for i in range(num_elves)]
     elf_count = len(elves)
     for i in range(elf_count - 1):
@@ -34,7 +34,7 @@ def white_elephant(num_elves: int) -> int:
     return e.idx
 
 
-def white_elephant_2(num_elves: int) -> int:
+def white_elephant_2_opp(num_elves: int) -> int:
     elves = [i + 1 for i in range(num_elves)]
     elfcnt = len(elves)
     i0 = 0
@@ -50,11 +50,13 @@ def white_elephant_2(num_elves: int) -> int:
 
 
 def prob_1(data: list[str]) -> int:
-    return white_elephant(int(data[0]))
+    return white_elephant_adj(int(data[0]))
 
 
 def prob_2(data: list[str]) -> int:
-    return white_elephant_2(int(data[0]))
+    for i in range(1, 300):
+        print(f"{i}: {white_elephant_2_opp(i)}")
+    # return white_elephant_2_opp(int(data[0]))
 
 
 def main() -> float:
