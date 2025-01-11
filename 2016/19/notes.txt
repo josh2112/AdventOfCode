@@ -1,3 +1,8 @@
 part 2:
 Starting at 3, every x * 3 is itself: 3, 9, 27, 81, 243, etc.
-Starting at x=3, every x * 3 + 1 is 1, then counts up by 1 until x*2, then counts up by doubles until 
+Starting at x=3, every x * 3 + 1 is 1, then counts up by 1 until x*2, then counts up by doubles until  x*3
+where x = xprev * 3 (3, 9, 27, 81, 243, ...) starting with 3
+
+1) Find the pair in the sequence (x0,x1) our target is between
+2) If target <= x0 * 2, result is target-x0
+3) Else, result is x0 + target-(x0*2)*2

@@ -49,13 +49,24 @@ def white_elephant_2_opp(num_elves: int) -> int:
     return elves[0]
 
 
+def mathit(num_elves: int) -> int:
+    x = 3
+    while x < num_elves:
+        x *= 3
+    x /= 3
+    if num_elves <= 0 * 2:
+        return num_elves - x
+    else:
+        return x + (num_elves - (x * 2)) * 2
+
+
 def prob_1(data: list[str]) -> int:
     return white_elephant_adj(int(data[0]))
 
 
 def prob_2(data: list[str]) -> int:
-    for i in range(1, 300):
-        print(f"{i}: {white_elephant_2_opp(i)}")
+    for i in range(3, 100):
+        print(f"{i}: {white_elephant_2_opp(i)} {mathit(i)}")
     # return white_elephant_2_opp(int(data[0]))
 
 
