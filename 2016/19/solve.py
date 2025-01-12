@@ -35,26 +35,11 @@ def white_elephant_adj(num_elves: int) -> int:
 
 
 def white_elephant_2_opp(num_elves: int) -> int:
-    elves = [i + 1 for i in range(num_elves)]
-    elfcnt = len(elves)
-    i0 = 0
-
-    for _ in range(elfcnt - 1):
-        i1 = ((elfcnt >> 1) + i0) % elfcnt
-        # print(f"elf {elves[i0]} takes present(s) from elf {elves[i1]}")
-        elves.remove(elves[i1])
-        elfcnt -= 1
-        i0 = (i0 + (1 if i1 > i0 else 0)) % elfcnt
-
-    return elves[0]
-
-
-def mathit(num_elves: int) -> int:
     x = 3
     while x < num_elves:
         x *= 3
     x /= 3
-    if num_elves <= 0 * 2:
+    if num_elves <= x * 2:
         return num_elves - x
     else:
         return x + (num_elves - (x * 2)) * 2
@@ -65,9 +50,7 @@ def prob_1(data: list[str]) -> int:
 
 
 def prob_2(data: list[str]) -> int:
-    for i in range(3, 100):
-        print(f"{i}: {white_elephant_2_opp(i)} {mathit(i)}")
-    # return white_elephant_2_opp(int(data[0]))
+    return white_elephant_2_opp(int(data[0]))
 
 
 def main() -> float:
