@@ -7,21 +7,20 @@ rotate left 1 step:                    bcdea
 move position 1 to position 4:         bdeac
 move position 3 to position 0:         abdec
 rotate based on position of letter b:  ecabd
-rotate based on position of letter d:  decab
+rotate based on position of letter d:  ecabd -> decab
+
+rotate based on letter position:
+ - x = letter index, rotcnt = 1 + x (+1 if x >= 4)
+ - new letter position x1 = (x + rot) % len
+ - x1 = (2x + 1 (+1 if x >= 4)) % len
+backwards:
+ - dunno how to derive?
+ - x1 = letter index
+ - try each x to see which gives x1
 
 decab
 -----
 rotate based on position of letter d:
-  1 + x (+1 if x >= 4)
-  0 => 1
-  1 => 2
-  2 => 3
-  3 => 4
-  4 => 6 (% 5 = 1)
-  5 => 7 (% 5 = 2)
-  6 => 8 (% 5 = 3)
-  7 => 9  (% 5 = 4)
-  d was 4 => 6, so 1. rotating 1 got it to 0
 rotate based on position of letter b:
 move position 3 to position 0:
 move position 1 to position 4:
@@ -29,3 +28,42 @@ rotate left 1 step:
 reverse positions 0 through 4:
 swap letter d with letter b:
 swap position 4 with position 0:
+
+
+y = x%5
+x = y + 5z (where z is 0,1,2,etc.)
+
+x y
+---
+0 0
+1 1
+2 2
+3 3
+4 4
+5 0
+6 1
+7 2
+8 3
+
+abcdefgh
+--------
+swap position 4 with position 0: ebcdafgh
+swap letter d with letter b: edcbafgh
+reverse positions 0 through 4: abcdefgh
+rotate left 1 step: bcdefgha
+move position 1 to position 4: bdefcgha
+move position 3 to position 0: fbdecgha
+rotate based on position of letter b: hafbdecg
+rotate based on position of letter d: fbdecgha
+
+fbdecgha
+--------
+rotate based on position of letter d: hafbdecg
+rotate based on position of letter b: fbdecgha
+move position 3 to position 0: bdefcgha
+move position 1 to position 4: bcdefgha
+rotate left 1 step: cdefghab
+reverse positions 0 through 4: gfedchab
+swap letter d with letter b: gfebchad
+swap position 4 with position 0: cfebghad
+Part 2: cfebghad

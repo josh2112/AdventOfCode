@@ -9,8 +9,6 @@ INPUT = "input.txt"
 # Part to solve, 1 or 2
 PART = 1
 
-SWAP_POS, SWAP_LTR, ROT, ROT_LTR, REV, MOVE = 0, 1, 2, 3, 4, 5
-
 
 def rot(pwd: list[str], cnt: int):
     return pwd[-(cnt % len(pwd)) :] + pwd[: -(cnt % len(pwd))]
@@ -30,16 +28,13 @@ def scramble(data: list[str], pwdstr: str):
             x = pwd.index(tk[6])
             pwd = rot(pwd, x + 1 + (1 if x >= 4 else 0))
         elif line.startswith("rotate"):
-            x = int(tk[2]) * (-1 if tk[1].startswith("l") else 1)
-            pwd = rot(pwd, x)
+            pwd = rot(pwd, int(tk[2]) * (-1 if tk[1].startswith("l") else 1))
         elif line.startswith("rev"):
             x, y = int(tk[2]), int(tk[4])
             pwd = pwd[:x] + list(reversed(pwd[x : y + 1])) + pwd[y + 1 :]
         elif line.startswith("move"):
             x, y = int(tk[2]), int(tk[5])
-            c = pwd.pop(x)
-            pwd.insert(y, c)
-        print(f"{line}:\t{''.join(pwd)}")
+            pwd.insert(y, pwd.pop(x))
     return "".join(pwd)
 
 
@@ -54,29 +49,32 @@ def unscramble(data: list[str], pwdstr: str):
             x, y = pwd.index(tk[2]), pwd.index(tk[5])
             pwd[x], pwd[y] = pwd[y], pwd[x]
         elif line.startswith("rotate b"):
-            x = pwd.index(tk[6])
-            pwd = rot(pwd, -(x + 1 + (1 if x >= 4 else 0)))
+            x1 = pwd.index(tk[6])
+            # Find the original position that would've caused the letter to move here
+            x0 = next(
+                i
+                for i in range(len(pwd))
+                if ((2 * i + 1 + (1 if i >= 4 else 0)) % len(pwd)) == x1
+            )
+            pwd = rot(pwd, (x0 - x1) % -len(pwd))
         elif line.startswith("rotate"):
-            x = int(tk[2]) * (-1 if tk[1].startswith("l") else 1)
-            pwd = rot(pwd, -x)
+            pwd = rot(pwd, int(tk[2]) * (1 if tk[1].startswith("l") else -1))
         elif line.startswith("rev"):
             x, y = int(tk[2]), int(tk[4])
             pwd = pwd[:x] + list(reversed(pwd[x : y + 1])) + pwd[y + 1 :]
         elif line.startswith("move"):
             x, y = int(tk[2]), int(tk[5])
-            c = pwd.pop(x)
-            pwd.insert(y, c)
+            pwd.insert(x, pwd.pop(y))
     return "".join(pwd)
 
 
 def prob_1(data: list[str]) -> int:
-    return scramble(data, "abcde")
-    # return scramble(data, "abcdefgh")
+    # return scramble(data, "abcde")
+    return scramble(data, "abcdefgh")
 
 
 def prob_2(data: list[str]) -> int:
     return unscramble(data, "fbgdceah")
-    return 0
 
 
 def main() -> float:
