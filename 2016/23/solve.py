@@ -9,35 +9,40 @@ INPUT = "input.txt"
 # Part to solve, 1 or 2
 PART = 1
 
+INC, DEC, CPY, JNZ, TGL = range(5)
+INSTRS = ["inc", "dec", "cpy", "jnz", "tgl"]
+
 
 def run(data: list[str], reg: dict[str, int], ic: int) -> int:
     prog = [(line + " .").split() for line in data]
+    for instr in prog:
+        instr[0] = INSTRS.index(instr[0])
 
     while ic < len(prog) - 1:
         ic += 1
 
         instr, x, y, *_ = prog[ic]
 
-        if instr == "tgl":  # tgl
+        if instr == TGL:  # tgl
             d = ic + reg[x] if x in reg else int(x)
             if d < 0 or d >= len(prog):
                 continue
-            elif prog[d][0] == "cpy":  # cpy
-                prog[d][0] = "jnz"
-            elif prog[d][0] == "jnz":  # jnz
-                prog[d][0] = "cpy"
-            elif prog[d][0] == "inc":  # inc
-                prog[d][0] = "dec"
-            elif prog[d][0] in ("dec", "tgl"):
-                prog[d][0] = "inc"
+            elif prog[d][0] == CPY:
+                prog[d][0] = JNZ
+            elif prog[d][0] == JNZ:
+                prog[d][0] = CPY
+            elif prog[d][0] == INC:
+                prog[d][0] = DEC
+            elif prog[d][0] in (DEC, TGL):
+                prog[d][0] = INC
 
-        elif instr[0] == "c" and y in reg:  # cpy
+        elif instr == CPY and y in reg:
             reg[y] = reg[x] if x in reg else int(x)
 
-        elif instr[2] == "c":  # inc/dec
-            reg[x] += 1 * (1 if instr[0] == "i" else -1)
+        elif instr in (INC, DEC):
+            reg[x] += 1 * (1 if instr == INC else -1)
 
-        elif instr[0] == "j" and (reg[x] if x in reg else int(x)) != 0:  # jnz
+        elif instr == JNZ and (reg[x] if x in reg else int(x)) != 0:
             ic += reg[y] if y in reg else int(y) - 1
 
     return reg["a"]
