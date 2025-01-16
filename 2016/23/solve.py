@@ -7,7 +7,7 @@ import time
 INPUT = "input.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 INC, DEC, CPY, JNZ, TGL = range(5)
 INSTRS = ["inc", "dec", "cpy", "jnz", "tgl"]
@@ -15,11 +15,17 @@ INSTRS = ["inc", "dec", "cpy", "jnz", "tgl"]
 
 def run(data: list[str], reg: dict[str, int], ic: int) -> int:
     prog = [(line + " .").split() for line in data]
+
     for instr in prog:
         instr[0] = INSTRS.index(instr[0])
 
     while ic < len(prog) - 1:
         ic += 1
+
+        if ic == 3:
+            reg["a"] *= reg["b"]
+            reg["c"], reg["d"] = 0, 0
+            ic = 10
 
         instr, x, y, *_ = prog[ic]
 
@@ -43,7 +49,7 @@ def run(data: list[str], reg: dict[str, int], ic: int) -> int:
             reg[x] += 1 * (1 if instr == INC else -1)
 
         elif instr == JNZ and (reg[x] if x in reg else int(x)) != 0:
-            ic += reg[y] if y in reg else int(y) - 1
+            ic += (reg[y] if y in reg else int(y)) - 1
 
     return reg["a"]
 
@@ -53,8 +59,7 @@ def prob_1(data: list[str]) -> int:
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    return run(data, {"a": 12, "b": 0, "c": 0, "d": 0}, -1)
 
 
 def main() -> float:

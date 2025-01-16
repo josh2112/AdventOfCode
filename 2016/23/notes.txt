@@ -1,0 +1,3 @@
+Histogram of lines run shows that 5 through 7 were run most often, followed by 4 through 9.
+Printing out registers before and after looping 4-9 showed that a = a*b, and c and d were reset to 0.
+So at line 3, do the multiplication manually and skip to line 10.
