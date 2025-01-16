@@ -1,11 +1,11 @@
 """https://adventofcode.com/2016/day/24"""
 
 import argparse
-import time
 import heapq
+import time
 
 # Input file path (default is "input.txt")
-INPUT = "input.ex.txt"
+INPUT = "input.txt"
 
 # Part to solve, 1 or 2
 PART = 1
@@ -28,27 +28,44 @@ def prob_1(data: list[str]) -> int:
     spaces, goals, p0 = parse(data)
     goals.remove(p0)
 
+    # From point p, walk in direction d until we hit a goal or wall or see an intersection (a space on either side).
+    # Return last point and number of steps taken.
+    def walk(p, d):
+        perpdirs = ((0, 1), (0, -1)) if d[1] == 0 else ((1, 0), (-1, 0))
+        c = 0
+        while (p1 := (p[0] + d[0], p[1] + d[1])) in spaces:
+            c += 1
+            # Have we hit an intersection or a goal?
+            if (
+                any((p1[0] + d1[0], p1[1] + d1[1]) in spaces for d1 in perpdirs)
+                or p1 in goals
+            ):
+                return p1, c
+            p = p1
+        return p, c
+
     # steps taken, num goals remaining, outstanding goals, position
     q = [(0, len(goals), goals, p0)]
 
-    # (position, num goals remaining) -> steps taken
-    v = {(p0, len(goals)): 0}
+    # (position, outstanding goals) -> steps taken
+    v = {(p0, frozenset(goals)): 0}
 
     while q:
         c0, n0, g0, p0 = heapq.heappop(q)
 
+        # print(f"Step {c0}: exploring from {p0} with {n0} goal(s) left: {g0}")
+
         if n0 == 0:
             return c0
 
-        c1 = c0 + 1
-
         for d in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            if (p1 := (p0[0] + d[0], p0[1] + d[1])) in spaces:
-                g1, n1 = g0 - set((p1,)), n0
-                if len(g1) < len(g0):
-                    n1 -= 1
-                if (p1, n1) not in v or c1 < v[(p1, n1)]:
-                    v[(p1, n1)] = c1
+            p1, dc = walk(p0, d)
+            if dc > 0:
+                c1 = c0 + dc
+                g1 = frozenset(g0 - set((p1,)))
+                n1 = n0 - len(g0) + len(g1)
+                if (p1, g1) not in v or c1 < v[(p1, g1)]:
+                    v[(p1, g1)] = c1
                     heapq.heappush(q, (c1, n1, g1, p1))
 
 
