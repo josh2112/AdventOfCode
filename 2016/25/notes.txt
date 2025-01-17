@@ -1,0 +1,57 @@
+best = 3 (a = 0)
+best = 5 (a = 8)
+best = 6 (a = 40)
+best = 8 (a = 104)
+best = 9 (a = 360)
+
+
+
+# First 8 lines are only run once, result is d = a + 2541
+
+
+d = a
+c = 11
+do  # d += (b*11)
+    b = 231
+    do   # d += b
+        d += 1
+        b -= 1
+    while b != 0
+    c -= 1
+while c != 0    # 7
+
+:Line-9 (IC=8)
+
+a = d
+
+:Line-10 (IC=9)
+
+# a has to alternate 1/0 at this point for shit to work
+b = a
+a = 0
+while True:
+    c = 2
+    while c != 0:
+        if b == 0: # This goto will only ever be executed if original a was < 2
+            goto :21
+        b -= 1
+        c -= 1
+
+    # at this point, a = 0, b = original a - 2, c = 0, d unchanged
+
+    a += 1  # Line 19 (IC=18)
+
+# This is basically b -= c; c = 0
+# C has to continually alternate 1/2 at this point
+:Line-21 (IC=20)
+b = 2                   # 21
+while c != 0:
+    b -= 1
+    c -= 1
+
+print( b )
+
+if a != 0:
+    goto :Line-10 
+
+goto :Line-9 (IC=8)
