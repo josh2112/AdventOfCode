@@ -44,19 +44,19 @@ def prob_1(data: list[str]) -> int:
             p = p1
         return p, c
 
-    # steps taken, num goals remaining, outstanding goals, position
-    q = [(0, len(goals), goals, p0)]
+    # steps taken, num goals remaining, outstanding goals, position, path
+    q = [(0, len(goals), goals, p0, [p0])]
 
     # (position, outstanding goals) -> steps taken
     v = {(p0, frozenset(goals)): 0}
 
     while q:
-        c0, n0, g0, p0 = heapq.heappop(q)
+        c0, n0, g0, p0, path = heapq.heappop(q)
 
         # print(f"Step {c0}: exploring from {p0} with {n0} goal(s) left: {g0}")
 
         if n0 == 0:
-            return c0
+            return c0, path
 
         for d in ((0, -1), (1, 0), (0, 1), (-1, 0)):
             p1, dc = walk(p0, d)
@@ -66,7 +66,7 @@ def prob_1(data: list[str]) -> int:
                 n1 = n0 - len(g0) + len(g1)
                 if (p1, g1) not in v or c1 < v[(p1, g1)]:
                     v[(p1, g1)] = c1
-                    heapq.heappush(q, (c1, n1, g1, p1))
+                    heapq.heappush(q, (c1, n1, g1, p1, path + [p1]))
 
 
 def prob_2(data: list[str]) -> int:
