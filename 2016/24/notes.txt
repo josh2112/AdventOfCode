@@ -1,0 +1,9 @@
+It's breadth-first searches all the way down...
+
+First we parse the empty spaces into an array. Then we build an edges array (pairs of straight-line segments) by walking in all 4 directions from a given point until we hit a wall or goal or see an intersection (empty space perpendicular to our walk direction).
+
+Then, using those edges, we calculate the shortest path between all pairs of goals.
+
+Using the shortest path pairs and starting at 0, we find the shortest path that hits all goals.
+
+For part 2, a "is returning home" boolean is added to the state. Once we have hit all the goals, we set it to true, remove goal 0 from the hit-goals list and continue running.

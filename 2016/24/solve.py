@@ -2,13 +2,15 @@
 
 import argparse
 import heapq
+import itertools
 import time
+from collections import defaultdict
 
 # Input file path (default is "input.txt")
-INPUT = "input.txt"
+INPUT = "input.ex.txt"
 
 # Part to solve, 1 or 2
-PART = 1
+PART = 2
 
 
 def parse(data: list[str]):
@@ -21,15 +23,7 @@ def parse(data: list[str]):
                     goals.add((x, y))
                     if c == "0":
                         start = (x, y)
-    return spaces, goals, start
 
-
-def prob_1(data: list[str]) -> int:
-    spaces, goals, p0 = parse(data)
-    goals.remove(p0)
-
-    # From point p, walk in direction d until we hit a goal or wall or see an intersection (a space on either side).
-    # Return last point and number of steps taken.
     def walk(p, d):
         perpdirs = ((0, 1), (0, -1)) if d[1] == 0 else ((1, 0), (-1, 0))
         c = 0
@@ -44,34 +38,77 @@ def prob_1(data: list[str]) -> int:
             p = p1
         return p, c
 
-    # steps taken, num goals remaining, outstanding goals, position, path
-    q = [(0, len(goals), goals, p0, [p0])]
-
-    # (position, outstanding goals) -> steps taken
-    v = {(p0, frozenset(goals)): 0}
+    edges = defaultdict(set[tuple[int, int]])
+    q = [(0, start)]
 
     while q:
-        c0, n0, g0, p0, path = heapq.heappop(q)
-
-        # print(f"Step {c0}: exploring from {p0} with {n0} goal(s) left: {g0}")
-
-        if n0 == 0:
-            return c0, path
+        c0, p0 = heapq.heappop(q)
 
         for d in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            p1, dc = walk(p0, d)
-            if dc > 0:
-                c1 = c0 + dc
-                g1 = frozenset(g0 - set((p1,)))
-                n1 = n0 - len(g0) + len(g1)
-                if (p1, g1) not in v or c1 < v[(p1, g1)]:
-                    v[(p1, g1)] = c1
-                    heapq.heappush(q, (c1, n1, g1, p1, path + [p1]))
+            p1, c1 = walk(p0, d)
+            if c1 > 0 and p1 not in edges[p0]:
+                edges[p0].add(p1)
+                heapq.heappush(q, (c1, p1))
+
+    return edges, goals, start
+
+
+def shortest_path(start, end, edges):
+    q = [(0, start)]
+    v = {start: 0}
+
+    while q:
+        c0, p0 = heapq.heappop(q)
+
+        if p0 == end:
+            return c0
+
+        for p1 in edges[p0]:
+            c1 = c0 + abs(p0[0] - p1[0]) + abs(p0[1] - p1[1])
+            if p1 not in v or c1 < v[p1]:
+                v[p1] = c1
+                heapq.heappush(q, (c1, p1))
+
+
+def dist_between_goals(data: list[str]):
+    edges, goals, p0 = parse(data)
+    dist = dict()
+
+    for start, end in itertools.combinations(goals, r=2):
+        dist[(start, end)] = dist[(end, start)] = shortest_path(start, end, edges)
+
+    return dist, goals, p0
+
+
+def prob_1(data: list[str], part2: bool = False) -> int:
+    dist, goals, p0 = dist_between_goals(data)
+    goal_0 = p0
+
+    # steps taken, goals hit, position, returning home (for pt 2)
+    q = [(0, frozenset([p0]), p0, False)]
+    v = {(p0, frozenset([p0])): 0}
+
+    while q:
+        c0, gh0, p0, rh = heapq.heappop(q)
+
+        if goals.issubset(gh0):
+            if part2 and not rh:
+                # We've hit all goals, now go back to zero by removing it from the hit list.
+                gh0 = gh0 - set([goal_0])
+                rh = True
+            else:
+                return c0
+
+        for p1 in [pr[1] for pr in dist if pr[0] == p0]:
+            c1 = c0 + dist[(p0, p1)]
+            gh1 = frozenset(gh0 | set([p1]))
+            if (p1, gh1) not in v or c1 < v[(p1, gh1)]:
+                v[(p1, gh1)] = c1
+                heapq.heappush(q, (c1, gh1, p1, rh))
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    return prob_1(data, True)
 
 
 def main() -> float:
