@@ -81,12 +81,11 @@ def dist_between_goals(data: list[str]):
 
 
 def prob_1(data: list[str], part2: bool = False) -> int:
-    dist, goals, p0 = dist_between_goals(data)
-    goal_0 = p0
+    dist, goals, start = dist_between_goals(data)
 
     # steps taken, goals hit, position, returning home (for pt 2)
-    q = [(0, frozenset([p0]), p0, False)]
-    v = {(p0, frozenset([p0])): 0}
+    q = [(0, frozenset([start]), start, False)]
+    v = {(start, frozenset([start])): 0}
 
     while q:
         c0, gh0, p0, rh = heapq.heappop(q)
@@ -94,7 +93,7 @@ def prob_1(data: list[str], part2: bool = False) -> int:
         if goals.issubset(gh0):
             if part2 and not rh:
                 # We've hit all goals, now go back to zero by removing it from the hit list.
-                gh0 = gh0 - set([goal_0])
+                gh0 = gh0 - set([start])
                 rh = True
             else:
                 return c0
