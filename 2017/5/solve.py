@@ -13,12 +13,14 @@ PART = 1
 def run(data: list[str], part2: bool = False) -> int:
     prog = list(map(int, data))
     ic, jmps = 0, 0
-    while 0 <= ic < len(prog):
-        ic2 = ic + prog[ic]
-        prog[ic] += 1 if not part2 or prog[ic] < 3 else -1
-        ic = ic2
-        jmps += 1
-    return jmps
+    try:
+        while True:
+            ic2 = ic + prog[ic]
+            prog[ic] += 1 if not part2 or prog[ic] < 3 else -1
+            ic = ic2
+            jmps += 1
+    except IndexError:
+        return jmps
 
 
 def prob_1(data: list[str]) -> int:
