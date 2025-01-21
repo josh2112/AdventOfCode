@@ -15,13 +15,7 @@ def run(data: list[str], part2: bool = False) -> int:
     ic, jmps = 0, 0
     while 0 <= ic < len(prog):
         ic2 = ic + prog[ic]
-        if part2:
-            if prog[ic] >= 3:
-                prog[ic] -= 1
-            else:
-                prog[ic] += 1
-        else:
-            prog[ic] += 1
+        prog[ic] += 1 if not part2 or prog[ic] < 3 else -1
         ic = ic2
         jmps += 1
     return jmps
