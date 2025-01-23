@@ -5,9 +5,8 @@ import datetime
 import os
 from string import Template
 
-from dotenv import load_dotenv
-
 import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
