@@ -1,0 +1,1 @@
+Cube coordinates, makes it really easy to calculate hexagon distances: https://www.redblobgames.com/grids/hexagons-v1/
