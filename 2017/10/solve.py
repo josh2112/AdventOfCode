@@ -1,9 +1,9 @@
 """https://adventofcode.com/2017/day/10"""
 
 import argparse
+import logging
 import time
 from dataclasses import dataclass
-import logging
 from functools import reduce
 from operator import xor
 
@@ -29,7 +29,7 @@ class Node:
         return lst
 
 
-def knot(size: int, lengths: list[int], part2: bool = False):
+def knot(size: int, lengths: list[int], rounds: int = 1):
     def advance(n: Node, count: int):
         for i in range(count):
             n = n.next
@@ -43,7 +43,7 @@ def knot(size: int, lengths: list[int], part2: bool = False):
     head, cur = nodes[0], nodes[0]
     skip = 0
 
-    for rounds in range(64 if part2 else 1):
+    for rounds in range(rounds):
         for ln in lengths:
             if ln < 2:
                 # No list to reverse, just advance cur
@@ -73,28 +73,21 @@ def knot(size: int, lengths: list[int], part2: bool = False):
 
     return head
 
-    if part2:
-        sublist, n = [], head
-        for i in range(size):
-            sublist.append(n)
-            n = n.next
-        return sublist
-    else:
-        return head.value * head.next.value
-
 
 def prob_1(data: list[str]) -> int:
     head = knot(256, list(map(int, data[0].split(","))))
     return head.value * head.next.value
 
 
-def prob_2(data: list[str]) -> int:
-    head = knot(256, [ord(c) for c in data[0]] + [17, 31, 73, 47, 23], part2=True)
-
+# Run the knot hash with day 10 part 2 specs for size, length and rounds. This will be important for day 17!
+def general_knot_hash(lengths: list[int]) -> list[int]:
+    head = knot(256, lengths + [17, 31, 73, 47, 23], rounds=64)
     lst = [n.value for n in head.list(256)]
+    return [reduce(xor, lst[i : i + 16]) for i in range(0, 256, 16)]
 
-    hash = [reduce(xor, lst[i : i + 16]) for i in range(0, 256, 16)]
-    return "".join(f"{h:02x}" for h in hash)
+
+def prob_2(data: list[str]) -> int:
+    return "".join(f"{h:02x}" for h in general_knot_hash([ord(c) for c in data[0]]))
 
 
 if __name__ == "__main__":
