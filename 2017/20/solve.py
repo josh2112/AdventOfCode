@@ -34,9 +34,6 @@ class Point:
     def __truediv__(self, scalar):
         return Point(self.x / scalar, self.y / scalar, self.z / scalar)
 
-    def __abs__(self):
-        return Point(abs(self.x), abs(self.y), abs(self.z))
-
     def dist(self):
         return abs(self.x) + abs(self.y) + abs(self.z)
 
@@ -55,6 +52,7 @@ class Particle:
         self.v_plus_half_a = self.v + self.half_a
 
     def project(self, t: int):
+        # The formula for their wierd discrete equation of motion
         # (a0/2) * t^2 + (v0 + a0/2) * t + p
         return self.half_a * t * t + self.v_plus_half_a * t + self.p
 
