@@ -1,7 +1,6 @@
 """https://adventofcode.com/$year/day/$day"""
 
-import argparse
-import time
+from aoclib.runner import solve
 
 # Input file path (default is "input.txt")
 INPUT = "input.txt"
@@ -21,18 +20,4 @@ def prob_2(data: list[str]) -> int:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solves AoC $year day $day.")
-    parser.add_argument("-p", "--part", choices=("1", "2", "all"), default=str(PART))
-    parser.add_argument("-i", "--input", default=INPUT)
-    args = parser.parse_args()
-
-    with open(args.input, mode="r", encoding="utf-8") as f:
-        data = [line.strip() for line in f.readlines()]
-
-    start = time.perf_counter()
-    if args.part in ("1", "all"):
-        print(f"Part 1: {prob_1(data)}")
-    if args.part in ("2", "all"):
-        print(f"Part 2: {prob_2(data)}")
-
-    print(f"Time: {time.perf_counter() - start} s")
+    solve(__file__, PART, INPUT, prob_1, prob_2)
