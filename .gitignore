@@ -1,4 +1,5 @@
 .env
 .venv/
+build/
 input*.txt
 __pycache__/

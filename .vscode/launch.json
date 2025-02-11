@@ -1,15 +1,32 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug as module",
+            "name": "(py) Debug AoC script",
             "type": "debugpy",
             "request": "launch",
             "module": "${command:extension.commandvariable.file.relativeDirDots}.${fileBasenameNoExtension}",
             "args": ["${command:pickArgs}"]
+        },
+        {
+            "name": "(C++) Debug AoC program",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${fileDirname}\\build\\${fileBasenameNoExtension}.exe",
+            "args": "${input:debugArgs}",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "C/C++: cl.exe build active file"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "debugArgs",
+            "type": "promptString",
+            "description": "arguments",
+            "default": ""
         }
     ]
 }
