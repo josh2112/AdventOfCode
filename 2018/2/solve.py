@@ -23,8 +23,8 @@ def prob_1(data: list[str]) -> int:
 
 def prob_2(data: list[str]) -> int:
     for a, b in combinations(data, r=2):
-        if sum(diff := [1 if a[i] != b[i] else 0 for i in range(len(a))]) == 1:
-            return "".join(a[i] for i in range(len(a)) if diff[i] == 0)
+        if len(idxs := [i for i in range(len(a)) if a[i] != b[i]]) == 1:
+            return "".join(a[i] for i in range(len(a)) if i != idxs[0])
 
 
 if __name__ == "__main__":

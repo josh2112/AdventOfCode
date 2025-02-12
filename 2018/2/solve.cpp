@@ -36,56 +36,18 @@ string prob1(vector<string> &data)
     return to_string(n2 * n3);
 }
 
-#include <vector>
-#include <stdexcept>
-#include <algorithm>
-
-template <class iterator_type>
-class Combinations
-{
-    iterator_type first, last;
-    std::vector<bool> use;
-    unsigned r;
-    typedef typename std::iterator_traits<iterator_type>::value_type element_type;
-
-public:
-    Combinations(iterator_type first_, iterator_type last_, unsigned r_) : first(first_), last(last_), r(r_)
-    {
-        use.resize(std::distance(first, last), false);
-        if (r > use.size())
-            throw std::domain_error("can't select more elements than exist for combination");
-        std::fill(use.end() - r, use.end(), true);
-    }
-    template <class output_iterator>
-    bool operator()(output_iterator result)
-    {
-        iterator_type c = first;
-        for (unsigned i = 0; i < use.size(); ++i, ++c)
-        {
-            if (use[i])
-                *result++ = *c;
-        }
-        return std::next_permutation(use.begin(), use.end());
-    }
-};
-template <class iterator_type>
-Combinations<iterator_type> combinations(iterator_type first, iterator_type last, unsigned r)
-{
-    return Combinations<iterator_type>(first, last, r);
-}
-
 string prob2(vector<string> &data)
 {
-    vector<int> v{0, 1, 2, 3};
-    auto g_combinations = combinations(v.begin(), v.end(), 2);
-
-    ostream_iterator<string> it();
-    while (g_combinations(it))
+    for (auto a : data)
     {
-        cout << *it << endl;
+        for (auto b : data)
+        {
+            auto diff_idx = views::iota(0, (int)a.length()) | views::filter([&](int i)
+                                                                            { return a[i] != b[i]; });
+            if (auto b = diff_idx.begin(); distance(b, diff_idx.end()) == 1)
+                return a.erase(*b, 1);
+        }
     }
-
-    return "0";
 }
 
 typedef string (*AoCFunc)(vector<string> &data);
