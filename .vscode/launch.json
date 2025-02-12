@@ -12,13 +12,25 @@
             "name": "(C++) Debug AoC program",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${fileDirname}\\build\\${fileBasenameNoExtension}.exe",
+            "program": "${fileDirname}\\cpp\\${fileBasenameNoExtension}.exe",
             "args": "${input:debugArgs}",
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
             "console": "integratedTerminal",
             "preLaunchTask": "C/C++: cl.exe build active file"
+        },
+        {
+            "name": "(rust) Debug AoC program",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}\\target\\debug\\${input:rustTargetName}.exe",
+            "preLaunchTask": "rust: cargo build",
+            "args": "${input:debugArgs}",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "console": "integratedTerminal"
         }
     ],
     "inputs": [
@@ -27,6 +39,16 @@
             "type": "promptString",
             "description": "arguments",
             "default": ""
+        },
+        {
+            "id": "rustTargetName",
+            "type": "command",
+            "command": "extension.commandvariable.transform",
+            "args": {
+                "text": "${command:extension.commandvariable.file.relativeDirDots}",
+                "find": "\\.",
+                "replace": "-"
+            }
         }
     ]
 }

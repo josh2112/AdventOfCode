@@ -1,5 +1,5 @@
 [project]
-name = "adventofcode"
+name = "aoc"
 version = "0.1.0"
 description = "Josh2112's AoC repository"
 readme = "README.md"
