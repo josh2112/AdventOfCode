@@ -2,10 +2,10 @@
 
 from aoclib.runner import solve
 
-# Input file path (default is "input.txt")
+# Input file path (or pass with -i <path>)
 INPUT = "input.txt"
 
-# Part to solve, 1 or 2
+# Part to solve, 1 or 2 (or pass with -p <1|2|all>)
 PART = 1
 
 

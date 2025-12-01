@@ -9,5 +9,12 @@ dependencies = [
     "requests",
     "pillow",
     "numpy",
-    "more_itertools"
+    "more_itertools",
+    "aoclib",
 ]
+
+[tool.uv.workspace]
+members = ["aoclib/aoclib"]
+
+[tool.uv.sources]
+aoclib = { workspace = true }

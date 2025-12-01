@@ -4,9 +4,22 @@ import shlex
 import sys
 import time
 from pathlib import Path
+from typing import Callable
+
+Solvefunc = Callable[[list[str]], int]
 
 
-def solve(solverpath: str, part: str | int, input: str, prob_1, prob_2):
+def _solve(label: str, func: Solvefunc):
+    start = time.perf_counter()
+    ans = func()
+    elapsed = time.perf_counter() - start
+    print(f"Part {label}: {ans}")
+    print(f"Time: {elapsed} s")
+
+
+def solve(
+    solverpath: str, part: str | int, input: str, prob_1: Solvefunc, prob_2: Solvefunc
+):
     path = Path(solverpath)
     os.chdir(path.parent)
     year, day = path.parent.parts[-2:]
@@ -21,10 +34,7 @@ def solve(solverpath: str, part: str | int, input: str, prob_1, prob_2):
     with open(args.input, mode="r", encoding="utf-8") as f:
         data = [line.strip() for line in f.readlines()]
 
-    start = time.perf_counter()
     if args.part in ("1", "all"):
-        print(f"Part 1: {prob_1(data)}")
+        _solve("1", lambda: prob_1(data))
     if args.part in ("2", "all"):
-        print(f"Part 2: {prob_2(data)}")
-
-    print(f"Time: {time.perf_counter() - start} s")
+        _solve("2", lambda: prob_2(data))
