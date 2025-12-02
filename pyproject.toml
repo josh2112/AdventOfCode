@@ -3,7 +3,7 @@ name = "aoc"
 version = "0.1.0"
 description = "Josh2112's AoC repository"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "python-dotenv",
     "requests",
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["aoclib/aoclib"]
+members = ["aoclib"]
 
 [tool.uv.sources]
 aoclib = { workspace = true }

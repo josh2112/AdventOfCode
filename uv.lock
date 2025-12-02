@@ -22,7 +22,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aoclib", editable = "aoclib/aoclib" },
+    { name = "aoclib", editable = "aoclib" },
     { name = "more-itertools" },
     { name = "numpy" },
     { name = "pillow" },
@@ -33,7 +33,7 @@ requires-dist = [
 [[package]]
 name = "aoclib"
 version = "0.1.0"
-source = { editable = "aoclib/aoclib" }
+source = { editable = "aoclib" }
 
 [[package]]
 name = "certifi"
