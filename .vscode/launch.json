@@ -7,30 +7,6 @@
             "request": "launch",
             "module": "${command:extension.commandvariable.file.relativeDirDots}.${fileBasenameNoExtension}",
             "args": ["${command:pickArgs}"]
-        },
-        {
-            "name": "(C++) Debug AoC program",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${fileDirname}\\cpp\\${fileBasenameNoExtension}.exe",
-            "args": "${input:debugArgs}",
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [],
-            "console": "integratedTerminal",
-            "preLaunchTask": "C/C++: cl.exe build active file"
-        },
-        {
-            "name": "(rust) Debug AoC program",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceRoot}\\target\\debug\\${input:rustTargetName}.exe",
-            "preLaunchTask": "rust: cargo build",
-            "args": "${input:debugArgs}",
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [],
-            "console": "integratedTerminal"
         }
     ],
     "inputs": [

@@ -24,7 +24,7 @@ def sequences(length: int, max_digits: int, rpt_count: int | None = None):
         yield from (i * m for i in range(10 ** (length - 1), 10**length))
 
 
-def _solve(data: str, rpt_count: int | None = None) -> int:
+def find_invalid_ids(data: str, rpt_count: int | None = None) -> int:
     # Ranges are inclusive - increment the upper values
     ranges = [
         range(*map(sum, zip(map(int, r.split("-")), [0, 1]))) for r in data.split(",")
@@ -32,24 +32,20 @@ def _solve(data: str, rpt_count: int | None = None) -> int:
     max_digits = len(str(max(max(r) for r in ranges)))
 
     # Use set to exclude duplicates
-    return sum(
-        set(
-            [
-                x
-                for i in range(1, max_digits // 2 + 1)
-                for x in sequences(i, max_digits, rpt_count=rpt_count)
-                if any(x in r for r in ranges)
-            ]
-        )
+    return set(
+        x
+        for i in range(1, max_digits // 2 + 1)
+        for x in sequences(i, max_digits, rpt_count=rpt_count)
+        if any(x in r for r in ranges)
     )
 
 
 def prob_1(data: list[str]) -> int:
-    return _solve(data[0], rpt_count=2)
+    return sum(find_invalid_ids(data[0], rpt_count=2))
 
 
 def prob_2(data: list[str]) -> int:
-    return _solve(data[0])
+    return sum(find_invalid_ids(data[0]))
 
 
 if __name__ == "__main__":
