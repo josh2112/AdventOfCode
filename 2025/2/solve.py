@@ -19,9 +19,10 @@ def sequences(length: int, max_digits: int, rpt_count: int | None = None):
         else range(max_digits // length - 1)
     ):
         # For length=1 this gives us 11, 111, 1111, etc. For length=2 we get 101, 10101, 10101, etc.
-        m = m * (10**length) + 1
+        explen = 10**length
+        m = m * explen + 1
         # Multiply m by every length-digit number
-        yield from (i * m for i in range(10 ** (length - 1), 10**length))
+        yield from (i * m for i in range(10 ** (length - 1), explen))
 
 
 def find_invalid_ids(data: str, rpt_count: int | None = None) -> int:
