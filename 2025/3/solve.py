@@ -13,12 +13,12 @@ def max_joltage(bank: str, count: int) -> int:
     # Pick highest digit in the window between last digit chosen (or start) and first len(bank)-count+1 chars
     # Repeat 'till full
     result = []
-    a, b = 0, len(bank) - count + 1
-    while len(result) < count:
-        result.append(max(bank[a:b]))
-        i = bank[a:b].index(result[-1]) + a
-        a = i + 1
-        b += 1
+    a = 0
+    # [b] moves incrementally to the right; [a] is always one after the last digit chosen
+    for b in range(len(bank) - count + 1, len(bank) + 1):
+        window = bank[a:b]
+        result.append(max(window))
+        a += window.index(result[-1]) + 1
     return int("".join(result))
 
 
