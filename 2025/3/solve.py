@@ -1,7 +1,6 @@
 """https://adventofcode.com/2025/day/3"""
 
 from aoclib.runner import solve
-import heapq
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -10,25 +9,17 @@ INPUT = "input.txt"
 PART = 1
 
 
-def max_joltage(bank: str, cnt: int) -> int:
-    indices = []
-    sublists = [(0, len(bank))]
-
-    while len(indices) < cnt:
-        # Find all indices of the highest number in the rightmost sublist
-        a, b = heapq.heappop_max(sublists)
-        m = max(bank[a:b])
-        found = [i for i in range(a, b) if bank[i] == m]
-        # Add as many as needed to fill the result
-        indices.extend(found[: cnt - len(indices)])
-
-        # Split list at indices and queue all non-empty sublists
-        for i in found + [b]:
-            if i > a:
-                heapq.heappush_max(sublists, (a, i))
-            a = i + 1
-
-    return int("".join(bank[i] for i in sorted(indices)))
+def max_joltage(bank: str, count: int) -> int:
+    # Pick highest digit in the window between last digit chosen (or start) and first len(bank)-count+1 chars
+    # Repeat 'till full
+    result = []
+    a, b = 0, len(bank) - count + 1
+    while len(result) < count:
+        result.append(max(bank[a:b]))
+        i = bank[a:b].index(result[-1]) + a
+        a = i + 1
+        b += 1
+    return int("".join(result))
 
 
 def prob_1(data: list[str]) -> int:
