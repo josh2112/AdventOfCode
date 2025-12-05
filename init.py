@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import os
+from stat import S_IREAD, S_IRGRP, S_IROTH
 from string import Template
 
 import requests
@@ -27,6 +28,7 @@ def init_input(year: int, day: int, path: str) -> bool:
 
     with open(path, mode="w", encoding="utf-8") as f:
         f.write(r.text)
+    os.chmod(path, S_IREAD | S_IRGRP | S_IROTH)
 
     return True
 
