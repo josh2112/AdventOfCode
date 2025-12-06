@@ -18,8 +18,15 @@ def _solve(label: str, func: Solvefunc):
 
 
 def solve(
-    solverpath: str, part: str | int, input: str, prob_1: Solvefunc, prob_2: Solvefunc
+    solverpath: str,
+    part: str | int,
+    input: str,
+    prob_1: Solvefunc,
+    prob_2: Solvefunc,
+    no_strip_input: bool = False,
 ):
+    # no_strip_input: For some problems the leading and trailing whitepsace is
+    # important. Set this to true to preserve it (newline will still be stripped).
     path = Path(solverpath)
     os.chdir(path.parent)
     year, day = path.parent.parts[-2:]
@@ -32,7 +39,7 @@ def solve(
     args = parser.parse_args(shlex.split(" ".join(sys.argv[1:])))
 
     with open(args.input, mode="r", encoding="utf-8") as f:
-        data = [line.strip() for line in f.readlines()]
+        data = [line[:-1] if no_strip_input else line.strip() for line in f.readlines()]
 
     if args.part in ("1", "all"):
         _solve("1", lambda: prob_1(data))
