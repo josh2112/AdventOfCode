@@ -12,11 +12,12 @@ PART = 1
 
 def prob_1(data: list[str]) -> int:
     problems = [line.split() for line in data]
+
     total = 0
-    for i in range(len(problems[-1])):
+    for i in range(len(problems[0])):
         op = add if problems[-1][i] == "+" else mul
         result = 0 if op == add else 1
-        [result := op(result, int(line[i])) for line in problems[:-1]]
+        [result := op(result, int(values[i])) for values in problems[:-1]]
         total += result
     return total
 
@@ -27,6 +28,7 @@ def prob_2(data: list[str]) -> int:
     ranges = [
         range(indices[i], indices[i + 1] - 1) for i in range(len(indices) - 1)
     ] + [range(indices[-1], max(len(line) for line in data))]
+
     total = 0
     for r in ranges:
         op = add if data[-1][r.start] == "+" else mul
@@ -36,7 +38,6 @@ def prob_2(data: list[str]) -> int:
             for v in (int("".join(line[i] for line in data[:-1])) for i in r)
         ]
         total += result
-
     return total
 
 
