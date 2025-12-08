@@ -1,7 +1,9 @@
 """https://adventofcode.com/2025/day/7"""
 
-from aoclib.runner import solve
+from dataclasses import dataclass, field
 from functools import cache
+
+from aoclib.runner import solve
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -25,13 +27,13 @@ def prob_1(data: list[str]) -> int:
     return split_cnt
 
 
-def prob_2(data: list[str]) -> int:
+def prob_2_old(data: list[str]) -> int:
     timeline_cnt = 0
 
     # TODO: Not fast enough - takes 6 seconds on 80 rows, but full input is 140
 
     # Just for testing...
-    data = data[:80]
+    data = data[:50]
 
     data.append("-" * len(data[0]))  # Sentinel row
 
@@ -56,6 +58,37 @@ def prob_2(data: list[str]) -> int:
     trace(data[0].index("S"), 1)
 
     return timeline_cnt
+
+
+def prob_2(data: list[str]) -> int:
+    data.append("-" * len(data[0]))  # Sentinel row
+
+    @dataclass
+    class Node:
+        parent: "Node | None" = None
+        count: int = 0
+
+    def build(x: int, y: int, parent: Node | None):
+        if (x, y) not in nodes.keys():
+            nodes[(x, y)] = Node(parent)
+        n = nodes[(x, y)]
+
+        while data[y][x] == ".":
+            y += 1
+
+        if data[y][x] == "^":
+            build(x - 1, y + 1, n)
+            build(x + 1, y + 1, n)
+
+    nodes: dict[tuple[int, int], Node] = {}
+
+    build(data[0].index("S"), 0, None)
+    print(nodes)
+
+    # TODO 1: Ensure tree built OK
+    # TODO 2: Trace from bottom (1 level at a time) incrementing count on parent node
+
+    return 0
 
 
 if __name__ == "__main__":
