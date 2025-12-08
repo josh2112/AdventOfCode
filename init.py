@@ -17,6 +17,10 @@ if not AOC_SESSION:
 
 
 def init_input(year: int, day: int, path: str) -> bool:
+    if os.path.exists(path):
+        print(f"Warning: {path} already exists, skipping")
+        return False
+
     url = f"https://adventofcode.com/{year}/day/{day}/input"
     headers = {"Cookie": f"session={AOC_SESSION}"}
     r = requests.get(url, headers=headers, timeout=5)
