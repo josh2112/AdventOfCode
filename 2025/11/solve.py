@@ -1,8 +1,8 @@
 """https://adventofcode.com/2025/day/11"""
 
+from math import prod
+
 from aoclib.runner import solve
-from dataclasses import dataclass, field
-from string import Template
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -20,51 +20,50 @@ def prob_1(data: list[str]) -> int:
     return hop("you")
 
 
-def prob_2(data: list[str]) -> int:
-    nodes = {line.split(":")[0]: line.split()[1:] for line in data}
+def count_routes(nodes: dict[str, list[str]], start: str, goal: str) -> int:
+    # Since this is such a heavily-connected graph we end up with lots of duplicate states in the queue. Instead of
+    # adding repeat states, just increment a count of the number of times we've seen it. Current count will get passed
+    # on to each new state.
 
-    # Count paths svr -> fft, fft -> dac, dac -> out and multiply
-    # But this will be too slow -- fft occurs early in the tree, we will crash out going down paths that can't
-    # possibly lead to fft. Go backwards? But we'll have the opposite problem going from dac to out.
-    # Need to limit the search depth -- hardcode maximum depth from a to b by manual inspection of the graph?
-    # How to find it programatically?
+    q = [(start, 0, 1)]  # (node,hops,count)
 
-    def hop(n: str, dest: str, hops: int, maxhops: int):
-        if hops == maxhops:
-            return 0
+    num_routes = 0
+
+    while q:
+        node, hops, count = q.pop(0)
+
+        if node == goal:
+            num_routes += count
+            continue
+
         hops += 1
-        return (
-            1
-            if n == dest
-            else sum(hop(c, dest, hops, maxhops) for c in nodes.get(n, []))
-        )
 
-    print(
-        hop(
-            "svr",
-            "fft",
-            -1,
-            10,
-        )
-    )
-    print(
-        hop(
-            "fft",
-            "dac",
-            -1,
-            19,
-        )
-    )
-    print(
-        hop(
-            "dac",
-            "out",
-            -1,
-            9,
-        )
-    )
+        for n in nodes[node]:
+            # Look for matching state (node,hops) and increment the count
+            if i := next(
+                (i for i, s in enumerate(q) if (s[0], s[1]) == (n, hops)),
+                None,
+            ):
+                q[i] = (n, hops, q[i][2] + count)
+            else:
+                q.append((n, hops, count))
 
-    return 0
+    return num_routes
+
+
+def prob_2(data: list[str]) -> int:
+    nodes = {line.split(":")[0]: line.split()[1:] for line in data} | {"out": []}
+
+    # Count possible routes between each subroute (fft->dac, etc.) that we care about and multiply them together
+    # so we don't waste time checking routes that skip important nodes
+
+    # We know fft comes before dac (inspecting the input graph), but I imagine that's not guaranteed...
+    # so try it both ways
+
+    return sum(
+        prod(count_routes(nodes, a, b) for a, b in zip(p, p[1:]))
+        for p in (("svr", "dac", "fft", "out"), ("svr", "fft", "dac", "out"))
+    )
 
 
 if __name__ == "__main__":
