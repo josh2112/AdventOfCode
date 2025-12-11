@@ -1,9 +1,10 @@
 """https://adventofcode.com/2025/day/10"""
 
 from dataclasses import dataclass
-from itertools import chain, combinations, combinations_with_replacement
+from itertools import combinations_with_replacement
 
 from aoclib.runner import solve
+from scipy.optimize import linprog
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -45,56 +46,39 @@ class LightMachine:
 
 @dataclass
 class JoltageMachine:
-    num_lights: int
     target: list[int]
     buttons: tuple[tuple[int, ...], ...]
 
     @staticmethod
     def from_line(line: str) -> "JoltageMachine":
         tokens = [v[1:-1] for v in line.split()]  # Trim brackets and parens
-        num_lights = len(tokens[0])
 
         return JoltageMachine(
-            num_lights,
             list(map(int, tokens[-1].split(","))),
-            [
-                tuple(
-                    1 if i in map(int, t.split(",")) else 0 for i in range(num_lights)
-                )
-                for t in tokens[1:-1]
-            ],
+            [tuple(map(int, t.split(","))) for t in tokens[1:-1]],
         )
 
     def sync_joltage(self) -> int:
-        ##
-        ## TODO: This is all fucked
-        ##
-        # We know that there are limits on how many times a button can be pressed...
-        # ex. for {3,5,4,7}, we need at least 7 button presses, and we can't press any button that increments
-        # the first joltage more than 3 times.
-        # So maybe form lower and upper bounds on the number of presses for each button, and form combos from that?
-        #
-        # Do we want to favor buttons that increment more lights? To get us to the target faster?
+        # Apparently this is a linear programming problem. Feels dirty using a prepackaged solver though.
+        # TODO: Write a simple solver (e.g. simplex)
 
-        max_presses_per_button = {
-            b: min(self.target[i] for i in range(len(self.target)) if b[i] == 1)
-            for b in self.buttons
-        }
+        # For each constraint j: 1 if button i includes j else 0
+        constraints = [
+            [1 if j in b else 0 for b in self.buttons] for j in range(len(self.target))
+        ]
 
-        sorted_buttons = sorted(self.buttons, key=lambda b: sum(b), reverse=True)
-
-        # Make a 'bag' of buttons that can be pressed in any order, up to the upper bound on presses per button
-        bag = list(
-            chain.from_iterable([b] * max_presses_per_button[b] for b in sorted_buttons)
+        return int(
+            round(
+                linprog(
+                    [1] * len(self.buttons),
+                    A_eq=constraints,
+                    b_eq=self.target,
+                    bounds=[(0, None) for i in range(len(self.buttons))],
+                    integrality=[1 for i in range(len(self.buttons))],
+                    method="highs",
+                ).fun
+            )
         )
-
-        num_presses = max(self.target)
-        while True:
-            for seq in combinations(bag, num_presses):
-                joltage = [sum(b[i] for b in seq) for i in range(self.num_lights)]
-                if joltage == self.target:
-                    return num_presses
-            num_presses += 1
 
 
 def prob_1(data: list[str]) -> int:
@@ -102,12 +86,9 @@ def prob_1(data: list[str]) -> int:
 
 
 def prob_2(data: list[str]) -> int:
-    machines = [JoltageMachine.from_line(line) for line in data]
-
-    for m in machines[:1]:
-        print(m.sync_joltage())
-
-    return 0
+    return sum(
+        m.sync_joltage() for m in [JoltageMachine.from_line(line) for line in data]
+    )
 
 
 if __name__ == "__main__":

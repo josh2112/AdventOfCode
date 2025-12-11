@@ -23,6 +23,9 @@ e = b-2
 c+b+d=6
 a+b+d=7
 
+----
+1,5,0,1,3,0
+3547
 
 How do we do this in code?
 
