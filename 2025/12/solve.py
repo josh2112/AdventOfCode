@@ -1,7 +1,8 @@
 """https://adventofcode.com/2025/day/12"""
 
-from aoclib.runner import solve
 from dataclasses import dataclass
+
+from aoclib.runner import solve
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -12,62 +13,78 @@ PART = 1
 # Notes:
 # - Each present is a 3x3 square. Stored with origin at center, coords will be (-1,-1) to (1,1)
 # - Center does not change during rotate & flip
-# - Precompute all unique orientations (rotations & flips)
-# - Present origin possibilities are (1,1) to (w-1,h-1) of each region
+# - Precompute all orientations (rotations & flips). In case of symmetry remove duplicates
+# - Present placement possibilities are (1,1) to (w-1,h-1) of each region
 # - Trying all combos of present position and orientation is not workable...
 #   Is there a trick, like figuring out present configs that make a rect and tiling them?
-# - Are there cases we can accept immediately (region is big enough that each present gets its own 3x3 square)?
+#   - In example, 0/2/0 and 3/5/3 both fit perfectly in 7x3. Can we use that?
+# - Are there regions we can accept immediately (big enough that each present gets its own 3x3 square)?
 #   - (w//3)*(h//3) >= present count
+# - Are there regions we can reject immediately (not enough space for all present cells even disregarding shape)?
+# - Turns out the last note is all we need.
 
 
 @dataclass
 class Present:
-    i: int
-    cells: list[tuple[int, int]]
-
-    @staticmethod
-    def from_lines(lines: list[str]) -> "Present":
-        return Present(
-            int(lines[0].split(":")[0]),
-            [
-                (x, y)
-                for y, line in enumerate(lines[1:])
-                for x, c in enumerate(line)
-                if c == "#"
-            ],
-        )
+    cells: set[tuple[int, int]]
 
 
 @dataclass
 class Region:
-    size: tuple[int, int]
+    w: int
+    h: int
     counts: list[int]
-
-    @staticmethod
-    def from_line(line: str) -> "Region":
-        tokens = line.split()
-        return Region(
-            tuple(map(int, tokens[0][:-1].split("x"))),
-            list(map(int, tokens[1:])),
-        )
 
 
 def prob_1(data: list[str]) -> int:
     div = [0] + [i + 1 for i, line in enumerate(data) if not line] + [len(data) + 1]
     *ps, rs = [data[a : b - 1] for a, b in zip(div, div[1:])]
-    presents = [Present.from_lines(p) for p in ps]
-    regions = [Region.from_line(r) for r in rs]
 
-    easy_regions = [
-        r for r in regions if (r.size[0] // 3) * (r.size[1] // 3) >= sum(r.counts)
+    presents = [
+        Present(
+            {
+                (x - 1, y - 1)
+                for y, line in enumerate(lines[1:])
+                for x, c in enumerate(line)
+                if c == "#"
+            },
+        )
+        for lines in ps
     ]
-    regions = set(regions) - set(easy_regions)
-    return len(easy_regions)
+
+    regions = [
+        Region(
+            *map(int, line.split(":")[0].split("x")),
+            list(map(int, line.split()[1:])),
+        )
+        for line in rs
+    ]
+
+    num_accepted = 0
+    to_process = []
+
+    # Pathological cases first:
+    for r in regions:
+        # Accept regions big enough that each present gets its own 3x3 square without complex fitting
+        if (r.w // 3) * (r.h // 3) >= sum(r.counts):
+            num_accepted += 1
+        # Reject regions too small to fit all the presents even with perfect fitting. Store all others for further
+        # processing.
+        elif r.w * r.h >= sum(
+            r.counts[i] * len(p.cells) for i, p in enumerate(presents)
+        ):
+            to_process.append(r)
+
+    for r in to_process:
+        # But it's empty... every region is either big enough that presents don't have to
+        # share space, or too small that they can't fit even when shapes are not considered.
+        pass
+
+    return num_accepted
 
 
 def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+    return "Happy AoC 2025!"
 
 
 if __name__ == "__main__":
