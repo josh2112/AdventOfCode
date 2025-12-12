@@ -1,7 +1,8 @@
 """https://adventofcode.com/2025/day/6"""
 
-from aoclib.runner import solve
 from operator import add, mul
+
+from aoclib.runner import solve
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -41,5 +42,9 @@ def prob_2(data: list[str]) -> int:
     return total
 
 
+def main() -> float:
+    return solve(__file__, PART, INPUT, prob_1, prob_2, no_strip_input=True)
+
+
 if __name__ == "__main__":
-    solve(__file__, PART, INPUT, prob_1, prob_2, no_strip_input=True)
+    main()

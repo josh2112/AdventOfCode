@@ -77,5 +77,9 @@ def prob_2(data: list[str]) -> int:
             return e[0][0] * e[1][0]
 
 
+def main() -> float:
+    return solve(__file__, PART, INPUT, prob_1, prob_2)
+
+
 if __name__ == "__main__":
-    solve(__file__, PART, INPUT, prob_1, prob_2)
+    main()

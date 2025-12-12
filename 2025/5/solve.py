@@ -40,5 +40,9 @@ def prob_2(data: list[str]) -> int:
     return sum(len(r) for r in read_ranges(data[: data.index("")]))
 
 
+def main() -> float:
+    return solve(__file__, PART, INPUT, prob_1, prob_2)
+
+
 if __name__ == "__main__":
-    solve(__file__, PART, INPUT, prob_1, prob_2)
+    main()
