@@ -14,63 +14,55 @@ from fractions import Fraction as F
 
 # Represents each entry in the tableau as (cons + M*coef)
 class Entry:
-    def __init__(self, cons: F, coef: F):
-        self.cons, self.coef = cons, coef
+    def __init__(self, m: F, c: F):
+        self.m, self.c = m, c
 
     def __str__(self):
-        abscoef = f"{abs(self.coef) if abs(self.coef) > 1 else ''}M"
-        if self.cons and self.coef:
-            return f"{self.cons}{'-' if self.coef < 0 else '+'}{abscoef}"
-        elif self.cons:
-            return str(self.cons)
-        elif self.coef:
-            return f"{'-' if self.coef < 0 else ''}{abscoef}"
-        else:
-            return "0"
+        if not self.m:
+            return str(self.c)
+        m = f"{'-' if self.m < 0 else ''}{abs(self.m) if abs(self.m) > 1 else ''}M"
+        c = f"{'-' if self.c < 0 else '+'}{abs(self.c)}" if self.c != 0 else ""
+        return f"{m}{c}"
 
     def __add__(self, other: Entry):
-        return Entry(self.cons + other.cons, self.coef + other.coef)
+        return Entry(self.m + other.m, self.c + other.c)
 
-    def __mul__(self, other: Entry | int):
-        if other is int:
-            return Entry(self.cons * other, self.coef * other)
-        # Ex: (2M-1) * 2 = 4M-2
+    def __mul__(self, other: Entry):
         # Only one can contain M, the other has to be a constant only
-        elif self.coef and other.coef:
-            raise "Can't multiply two entries with nonero M!"
-        elif other.coef:
-            return other * self.cons
+        if self.m and other.m:
+            raise Exception("Can't multiply two entries with nonero M!")
+        elif other.m:
+            return other * self
         # Now other is the constant
-        return Entry(self.cons * other.cons, self.coef * other.cons)
+        return Entry(self.m * other.c, self.c * other.c)
 
 
 def test_entry_to_str():
     assert str(Entry(0, 0)) == "0"
-    assert str(Entry(1, 0)) == "1"
-    assert str(Entry(-1, 0)) == "-1"
-    assert str(Entry(0, 1)) == "M"
-    assert str(Entry(0, -1)) == "-M"
-    assert str(Entry(1, 1)) == "1+M"
-    assert str(Entry(-1, -1)) == "-1-M"
-    assert str(Entry(1, -1)) == "1-M"
-    assert str(Entry(-1, 1)) == "-1+M"
-    assert str(Entry(2, -2)) == "2-2M"
-    assert str(Entry(-2, 2)) == "-2+2M"
+    assert str(Entry(0, 1)) == "1"
+    assert str(Entry(0, -1)) == "-1"
+    assert str(Entry(1, 0)) == "M"
+    assert str(Entry(1, 1)) == "M+1"
+    assert str(Entry(1, -1)) == "M-1"
+    assert str(Entry(-1, 1)) == "-M+1"
+    assert str(Entry(-1, -1)) == "-M-1"
+    assert str(Entry(2, -2)) == "2M-2"
+    assert str(Entry(-2, 2)) == "-2M+2"
 
 
 class Tableau:
     def __init__(self, constraints: list[list[int]], solutions: list[int]):
-        self.tableau = [[Entry(c, 0) for c in row] for row in constraints]
+        self.tableau = [[Entry(0, c) for c in row] for row in constraints]
         self.tableau.insert(
             0,
-            [Entry(-1, 0)] * len(self.tableau[0]) + [Entry(0, -1)] * 2 + [Entry(0, 0)],
+            [Entry(0, -1)] * len(self.tableau[0]) + [Entry(-1, 0)] * 2 + [Entry(0, 0)],
         )
-        self.tableau[1].extend([Entry(1, 0), Entry(0, 0)])
-        self.tableau[2].extend([Entry(0, 0), Entry(1, 0)])
+        self.tableau[1].extend([Entry(0, 1), Entry(0, 0)])
+        self.tableau[2].extend([Entry(0, 0), Entry(0, 1)])
         for r in self.tableau[3:]:
             r.extend([Entry(0, 0), Entry(0, 0)])
         for i, r in enumerate(self.tableau[1:]):
-            r.append(Entry(solutions[i], 0))
+            r.append(Entry(0, solutions[i]))
 
     def __str__(self):
         return "\n".join(
@@ -83,6 +75,8 @@ class Tableau:
             for i in range(len(self.tableau[dest]))
         ]
 
+
+test_entry_to_str()
 
 tableau = Tableau(
     [
@@ -98,14 +92,14 @@ print("Initial tableau:")
 print(tableau)
 
 print("Remove M from Ys:")
-tableau.add(0, 1, Entry(0, 1))  # Add row 2 * M to row 1
-tableau.add(0, 2, Entry(0, 1))  # Add row 3 * M to row 1
+tableau.add(0, 1, Entry(1, 0))  # Add row 2 * M to row 1
+tableau.add(0, 2, Entry(1, 0))  # Add row 3 * M to row 1
 print(tableau)
 
 # Is it really this easy?
 print("Add each of the other rows to first row:")
 for i in range(3, len(tableau.tableau)):
-    tableau.add(0, i, Entry(1, 0))
+    tableau.add(0, i, Entry(0, 1))  # Add row i to row 1
 print(tableau)
 
 # TODO: The rest
