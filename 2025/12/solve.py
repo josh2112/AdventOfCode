@@ -21,7 +21,7 @@ PART = 1
 # - Are there regions we can accept immediately (big enough that each present gets its own 3x3 square)?
 #   - (w//3)*(h//3) >= present count
 # - Are there regions we can reject immediately (not enough space for all present cells even disregarding shape)?
-# - Turns out the last note is all we need.
+# - Turns out the last 2 notes are all we need.
 
 
 @dataclass
