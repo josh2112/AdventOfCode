@@ -75,31 +75,31 @@ class Tableau:
             for i in range(len(self.tableau[dest]))
         ]
 
+if __name__ == "__main__":
+    test_entry_to_str()
 
-test_entry_to_str()
+    tableau = Tableau(
+        [
+            [0, 0, 0, 0, 1, 1],
+            [0, 1, 0, 0, 0, 1],
+            [0, 0, 1, 1, 1, 0],
+            [1, 1, 0, 1, 0, 0],
+        ],
+        [3, 5, 4, 7],
+    )
 
-tableau = Tableau(
-    [
-        [0, 0, 0, 0, 1, 1],
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 1, 1, 0],
-        [1, 1, 0, 1, 0, 0],
-    ],
-    [3, 5, 4, 7],
-)
+    print("Initial tableau:")
+    print(tableau)
 
-print("Initial tableau:")
-print(tableau)
+    print("Remove M from Ys:")
+    tableau.add(0, 1, Entry(1, 0))  # Add row 2 * M to row 1
+    tableau.add(0, 2, Entry(1, 0))  # Add row 3 * M to row 1
+    print(tableau)
 
-print("Remove M from Ys:")
-tableau.add(0, 1, Entry(1, 0))  # Add row 2 * M to row 1
-tableau.add(0, 2, Entry(1, 0))  # Add row 3 * M to row 1
-print(tableau)
+    # Is it really this easy?
+    print("Add each of the other rows to first row:")
+    for i in range(3, len(tableau.tableau)):
+        tableau.add(0, i, Entry(0, 1))  # Add row i to row 1
+    print(tableau)
 
-# Is it really this easy?
-print("Add each of the other rows to first row:")
-for i in range(3, len(tableau.tableau)):
-    tableau.add(0, i, Entry(0, 1))  # Add row i to row 1
-print(tableau)
-
-# TODO: The rest
+    # TODO: The rest
