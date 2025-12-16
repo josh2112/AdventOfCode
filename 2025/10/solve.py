@@ -5,6 +5,7 @@ from itertools import combinations_with_replacement
 
 from aoclib.runner import solve
 from scipy.optimize import linprog
+from simplex3 import Tableau
 
 # Input file path (or pass with -i <path>)
 INPUT = "input.txt"
@@ -66,11 +67,12 @@ class JoltageMachine:
         constraints = [
             [1 if j in b else 0 for b in self.buttons] for j in range(len(self.target))
         ]
+        solution = [1] * len(self.buttons)
 
-        return int(
+        scipy_ans = int(
             round(
                 linprog(
-                    [1] * len(self.buttons),
+                    solution,
                     A_eq=constraints,
                     b_eq=self.target,
                     bounds=[(0, None) for i in range(len(self.buttons))],
@@ -79,6 +81,17 @@ class JoltageMachine:
                 ).fun
             )
         )
+
+        simplex_ans = Tableau(constraints, self.target, solution).solve()
+
+        print(scipy_ans, simplex_ans)
+
+        if scipy_ans != simplex_ans:
+            print(
+                f"ERROR: Scipy and simplex answers don't match: {scipy_ans} != {simplex_ans}"
+            )
+
+        return scipy_ans
 
 
 def prob_1(data: list[str]) -> int:
