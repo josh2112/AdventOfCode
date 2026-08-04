@@ -1,7 +1,5 @@
 """https://adventofcode.com/2018/day/5"""
 
-from dataclasses import dataclass
-
 from aoclib.runner import solve
 
 # Input file path (or pass with -i <path>)
@@ -11,40 +9,23 @@ INPUT = "input.txt"
 PART = 1
 
 
-@dataclass
-class Node:
-    i: int
-    prv: Node | None = None
-    nxt: Node | None = None
-
-
 def react(polymer: str):
-    nodes: list[Node] = []
-    for c in polymer:
-        n = Node(ord(c))
-        if nodes:
-            n.prv = nodes[-1]
-            nodes[-1].nxt = n
+    d, i = [ord(c) for c in polymer], 0
+    total, start = 0, 0
 
-    n = nodes[0]
-
-    while n.nxt:
-        if abs(n.i - n.nxt.i) == 32:
-            if n.prv:
-                n.prv.nxt = n.nxt.nxt
-            if n.nxt.nxt:
-                n.nxt.nxt.prv = n.prv
-            if n.prv:
-                n = n.prv
+    while i < len(d) - 1:
+        if abs(d[i] - d[i + 1]) == 32:
+            j = i + 1
+            while abs(d[i] - d[j]) == 32 and i > 0 and j < len(d) - 1:
+                i, j = i - 1, j + 1
+            if j == len(d) - 1:
+                break
+            else:
+                total += i - start
+                i, j = j + 1, j + 2
         else:
-            n = n.nxt
-    while n.prv:
-        n = n.prv
-    cnt = 1
-    while n.nxt:
-        cnt += 1
-        n = n.nxt
-    return cnt
+            i += 1
+    return len(d)
 
 
 def prob_1(data: list[str]) -> int:

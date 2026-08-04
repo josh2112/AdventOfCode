@@ -1,5 +1,11 @@
 dabAcCaCBAcCcaDA  
-i=0
+    ^^
+dabA..aCBAcCcaDA  
+   ^  ^
+
+dab....CBAcCcaDA  
+  ^    ^
+
 
 add 1 until abs(x[i]-x[j]) = 32
 dabAcCaCBAcCcaDA 
@@ -22,6 +28,7 @@ while abs(x[i]-x[j]):
     * in case of i==0:
       a..Abc
       ....bc
+      ^  ^
       i = j+1, j += 2
     * in case of j==end:
       CbA..a
