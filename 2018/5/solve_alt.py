@@ -9,23 +9,40 @@ INPUT = "input.txt"
 PART = 1
 
 
+# NEXT STEP: Create random polys of increasing size,
+# stop and print when we find one where solve.react and
+# solve_alt.react don't match!
 def react(polymer: str):
     d, i = [ord(c) for c in polymer], 0
-    total, start = 0, 0
+    i, j, total, k = 0, 0, 0, 1
 
-    while i < len(d) - 1:
-        if abs(d[i] - d[i + 1]) == 32:
-            j = i + 1
-            while abs(d[i] - d[j]) == 32 and i > 0 and j < len(d) - 1:
-                i, j = i - 1, j + 1
-            if j == len(d) - 1:
-                break
-            else:
-                total += i - start
-                i, j = j + 1, j + 2
+    while k < len(d):
+        print(i, j, k)
+        if abs(d[j] - d[k]) == 32:
+            print("  ", i, j, k)
+            skip = False
+            while k < len(d) and abs(d[j] - d[k]) == 32:
+                if j > i:
+                    j -= 1
+                    k += 1
+                    print("  match, widening to ", j, k)
+                else:
+                    print("  hit front, skipping ahead...")
+                    j = k + 1
+                    k = j + 1
+                    i = j
+                    skip = True
+                    break
+            if not skip:
+                print("no match, increasing total and skipping ahead...")
+                total += j - i + 1
+                i = j = k
+                k += 1
         else:
-            i += 1
-    return len(d)
+            j += 1
+            k += 1
+
+    return total + len(d) - i
 
 
 def prob_1(data: list[str]) -> int:

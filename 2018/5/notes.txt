@@ -35,3 +35,7 @@ while abs(x[i]-x[j]):
       Cb....
       j = i-1, j -= 2
 
+dab....CBA..caDA
+              ij
+
+total = 3 + 3
