@@ -6,12 +6,12 @@ import time
 from pathlib import Path
 from typing import Callable
 
-Solvefunc = Callable[[list[str]], int]
+Solvefunc = Callable[[list[str]], int | str]
 
 
-def _solve(label: str, func: Solvefunc) -> float:
+def _solve(label: str, func: Solvefunc, data: list[str]) -> float:
     start = time.perf_counter()
-    ans = func()
+    ans = func(data)
     elapsed = time.perf_counter() - start
     print(f"Part {label}: {ans}")
     print(f"Time: {elapsed} s")
@@ -45,8 +45,8 @@ def solve(
     elapsed = 0
 
     if args.part in ("1", "all"):
-        elapsed += _solve("1", lambda: prob_1(data))
+        elapsed += _solve("1", prob_1, data)
     if args.part in ("2", "all"):
-        elapsed += _solve("2", lambda: prob_2(data))
+        elapsed += _solve("2", prob_2, data)
 
     return elapsed

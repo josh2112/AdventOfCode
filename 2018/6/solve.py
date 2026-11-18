@@ -26,9 +26,9 @@ def prob_1(data: list[str]) -> int:
     pts, w, h = preprocess(data)
 
     # (x,y) => dist to nearest point
-    dists = defaultdict(lambda: inf)
+    dists: defaultdict[tuple[int, int], float] = defaultdict(lambda: inf)
     # (x,y) => list of indices nearest that point
-    indices = defaultdict(list)
+    indices: defaultdict[tuple[int, int], list[int]] = defaultdict(list)
 
     for i, pt in enumerate(pts):
         for y in range(h):
