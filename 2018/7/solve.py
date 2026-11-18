@@ -14,16 +14,8 @@ PART = 1
 
 @dataclass
 class Worker:
-    n: str
-    t: int
-
-
-def prob_1(data: list[str]) -> str | int:
-    return doit(data, 1)
-
-
-def prob_2(data: list[str]) -> str | int:
-    return doit(data, 2)
+    n: str  # Current node
+    t: int  # Done time
 
 
 def doit(data: list[str], part: int) -> int | str:
@@ -45,7 +37,7 @@ def doit(data: list[str], part: int) -> int | str:
     path: list[str] = []
     t = 0
 
-    while len(path) < len(nodes):
+    while True:
         avail_workers: list[Worker] = []
 
         # First, grab add any complete workers' nodes to the path and mark them as available
@@ -67,7 +59,7 @@ def doit(data: list[str], part: int) -> int | str:
 
             frontier.remove(w.n)
 
-        # Can we fast-forward to when the next worker is done?
+        # Fast-forward to when the next worker is done
         done_times = [w.t for w in workers if w.t > t]
         if not done_times:
             break
@@ -77,4 +69,4 @@ def doit(data: list[str], part: int) -> int | str:
 
 
 if __name__ == "__main__":
-    solve(__file__, PART, INPUT, prob_1, prob_2)
+    solve(__file__, PART, INPUT, lambda d: doit(d, 1), lambda d: doit(d, 2))
