@@ -15,7 +15,7 @@ def prob_1(data: list[str]) -> str:
 
 
 def prob_2(data: list[str]) -> str:
-    coord = doit(int(data[0]), list(range(3, 20)))
+    coord = doit(int(data[0]), list(range(1, 301)))
     return ",".join(str(v) for v in coord)
 
 
@@ -34,17 +34,21 @@ def doit(serial: int, valid_sizes: list[int]) -> tuple[int, int, int]:
             p = (rack_id * y + serial) * rack_id
             grid[y][x] = int((p / 100)) % 10 - 5
 
+    # Build a summed table (every cell is the sum of all cells in the 0,0 -> cell rect inclusive)
+    sums = [[0 for _ in range(301)] for _ in range(301)]
+    for y in range(1, 301):
+        for x in range(1, 301):
+            sums[y][x] = grid[y][x] + sums[y - 1][x] + sums[y][x - 1] - sums[y - 1][x - 1]
+
     max_p, max_coord = -100, (-1, -1, -1)
 
     for s in valid_sizes:
-        sq = list(offsets(s))
-        for y in range(1, 301 - s + 1):
-            for x in range(1, 301 - s + 1):
-                p = sum(grid[y + j][x + i] for i, j in sq)
+        for y in range(s, 301):
+            for x in range(s, 301):
+                p = sums[y][x] - sums[y][x - s] - sums[y - s][x] + sums[y - s][x - s]
                 if p > max_p:
                     max_p = p
-                    max_coord = (x, y, s)
-                    print(max_coord, p)
+                    max_coord = (x - s + 1, y - s + 1, s)
 
     return max_coord
 
