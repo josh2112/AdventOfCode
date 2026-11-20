@@ -15,12 +15,9 @@ PART = 1
 
 pattern = re.compile("^position=<\\s?(-?\\d+),\\s+(-?\\d+)> velocity=<\\s?(-?\\d+),\\s+(-?\\d+)>$", flags=re.MULTILINE)
 
-img_cnt = 0
 
-
-def draw(pts: list[list[int]]):
+def draw(pts: list[list[int]], cnt: int):
     global img_cnt
-    img_cnt += 1
 
     xmin, ymin = min(pt[0] for pt in pts), min(pt[1] for pt in pts)
     normalized = [(pt[0] - xmin, pt[1] - ymin) for pt in pts]
@@ -37,13 +34,15 @@ def draw(pts: list[list[int]]):
             print(pt[0], pt[1], w, h)
 
     os.makedirs("cache", exist_ok=True)
-    img.save(f"cache/img{img_cnt}.png")
+    img.save(f"cache/img{cnt}.png")
 
 
 def prob_1(data: list[str]) -> int:
     pts = [list(map(int, line)) for line in pattern.findall("\n".join(data))]
 
-    for _ in range(100):
+    possibly_text = False
+
+    for i in range(1, 1_000_001):
         for pt in pts:
             pt[0] += pt[2]
             pt[1] += pt[3]
@@ -51,10 +50,12 @@ def prob_1(data: list[str]) -> int:
         # Find ymax and ymin. Check every row in between for a point.
         ymin, ymax = min(pt[1] for pt in pts), max(pt[1] for pt in pts)
         if all(any(pt[1] == y for pt in pts) for y in range(ymin + 1, ymax)):
-            draw(pts)
+            possibly_text = True
+            draw(pts, i)
+        elif possibly_text:
+            return i
 
-    global img_cnt
-    return img_cnt
+    return -1
 
 
 def prob_2(data: list[str]) -> int:
