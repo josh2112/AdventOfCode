@@ -1,6 +1,6 @@
 """https://adventofcode.com/2018/day/13"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from aoclib.runner import solve
 
@@ -14,13 +14,21 @@ DIRS = ((1, 0), (0, 1), (-1, 0), (0, -1))
 CART_TO_DIR = ">v<^"
 
 
+def track_to_str(track: list[list[str]]) -> str:
+    return "\n" + "\n".join("".join(r) for r in track)
+
+
 @dataclass
 class Cart:
     pos: tuple[int, int]
     dir: tuple[int, int]
     next_intx: int = -1  # -1 = left, 0 = center, 1 = right
+    crashed = False
+
+    history: list[tuple[int, int]] = field(default_factory=lambda: [])
 
     def move(self):
+        self.history.append(self.pos)
         self.pos = (self.pos[0] + self.dir[0], self.pos[1] + self.dir[1])
 
     def turn(self, d: int):
@@ -34,7 +42,7 @@ class Cart:
         self.next_intx = self.next_intx + 1 if self.next_intx < 1 else -1
 
 
-def parse_track(data: list[str]):
+def run(data: list[str], clear_crashes: bool = False):
     track = [list(row) for row in data]
     carts: list[Cart] = []
 
@@ -45,20 +53,24 @@ def parse_track(data: list[str]):
                 carts.append(Cart((x, y), DIRS[dir_]))
                 track[y][x] = "-" if dir_ in (0, 2) else "|"
 
-    return track, carts
-
-
-def prob_1(data: list[str]) -> str:
-    track, carts = parse_track(data)
-
     while True:
-        # print("---------------")
-        # Move carts in y then x order
-        for cart in sorted(carts, key=lambda c: (c.pos[1], c.pos[0])):
-            # Move, then turn (if we're at a corner or intersection)
-            _old = cart.pos
+        # Move, check for crash, then turn (if we're at a corner or intersection)
+        for cart in sorted(filter(lambda c: not c.crashed, carts), key=lambda c: (c.pos[1], c.pos[0])):
+            if cart.crashed:
+                continue
+
             cart.move()
-            # print(_old, "->", cart.pos)
+
+            # Did we hit another cart?
+            crashes = [c for c in carts if c != cart and c.pos == cart.pos and not c.crashed]
+            if crashes:
+                if not clear_crashes:
+                    return ",".join(map(str, cart.pos))
+                else:
+                    for c in [*crashes, cart]:
+                        c.crashed = True
+                    continue
+
             t = track[cart.pos[1]][cart.pos[0]]
             if t == "+":
                 cart.intersect()
@@ -66,21 +78,11 @@ def prob_1(data: list[str]) -> str:
                 cart.turn(1 if cart.dir[1] else -1)
             elif t == "\\":
                 cart.turn(1 if cart.dir[0] else -1)
-            elif t == " ":
-                raise Exception("Cart off track!")
 
-        if len(set(c.pos for c in carts)) < len(carts):
-            seen: set[tuple[int, int]] = set()
-            crash = next(c.pos for c in carts if c.pos in seen or seen.add(c.pos))
-            return ",".join(map(str, crash))
-
-    return ""
-
-
-def prob_2(data: list[str]) -> int:
-    print(data)
-    return 0
+        uncrashed = [c for c in carts if not c.crashed]
+        if len(uncrashed) == 1:
+            return ",".join(map(str, uncrashed[0].pos))
 
 
 if __name__ == "__main__":
-    solve(__file__, PART, INPUT, prob_1, prob_2)
+    solve(__file__, PART, INPUT, lambda d: run(d), lambda d: run(d, True), no_strip_input=True)
