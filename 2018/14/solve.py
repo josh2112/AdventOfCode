@@ -1,7 +1,5 @@
 """https://adventofcode.com/2018/day/14"""
 
-from collections import deque
-
 from aoclib.runner import solve
 
 # Input file path (or pass with -i <path>)
@@ -11,34 +9,31 @@ INPUT = "input.txt"
 PART = 1
 
 
+# TODO: This is correct but takes 50 seconds for part 2!
+# It takes about 20 seconds to generate the necessary number of recipes and shuffle the elves
+# Which means 60% of the time is looking for candidates
+# Cut runtime to under 30 seconds with strings
 def doit(data: list[str], part: int) -> str:
-    target = [int(data[0])] if part == 1 else list(map(int, data[0]))
-    recipes = [3, 7]
+    target = int(data[0]) if part == 1 else data[0]
+    recipes = "37"
     elves = [0, 1]
 
-    candidates: deque[int] = deque()
+    # Max 2 entries can be added per round, so for part 2, check len(target)+2-1 from end
+    check_window = target + 10 if part == 2 else len(target) + 1
 
     while True:
-        new_recipes = list(map(int, list(str(recipes[elves[0]] + recipes[elves[1]]))))
-        recipes.extend(new_recipes)
-        for e, elf in enumerate(elves):
-            elves[e] = (elf + recipes[elf] + 1) % len(recipes)
-        # print("--------")
-        # print(recipes)
-        # print(elves)
-        if part == 1:
-            if len(recipes) > 10 + target[0]:
-                return "".join(map(str, recipes[target[0] : target[0] + 10]))
-        else:
-            # TODO: Need to keep track of each new target[0] we find, then when we
-            # have enough digits, check it and either return or discard
-            candidates.extend(i + len(recipes) - len(new_recipes) for i, r in enumerate(new_recipes) if r == target[0])
-            while (c := candidates[0]) and c + len(target) <= len(recipes):
-                if target == recipes[c : len(target) + c]:
-                    return c - 1
-                candidates.pop()
+        recipes += str(int(recipes[elves[0]]) + int(recipes[elves[1]]))
 
-    return 0
+        for e, elf in enumerate(elves):
+            elves[e] = (elf + int(recipes[elf]) + 1) % len(recipes)
+
+        if part == 1:
+            if len(recipes) > check_window:
+                return recipes[target:check_window]
+        elif target in recipes[-check_window:]:
+            return recipes.find(target)
+
+    return -1
 
 
 if __name__ == "__main__":
