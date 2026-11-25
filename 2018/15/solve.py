@@ -1,6 +1,7 @@
 """https://adventofcode.com/2018/day/15"""
 
 from dataclasses import dataclass
+from itertools import chain
 
 from aoclib.runner import solve
 
@@ -39,33 +40,57 @@ class Unit:
         return self.cell < other.cell
 
 
+# BFS from c outward, stopping after the iteration in which we reach cell(s) from
+# all_enemy_adj_cells
+def find_best_reachable_cell(c: Cell, all_enemy_adj_cells: set[Cell], spaces: list[Cell]):
+    if c in all_enemy_adj_cells:
+        return c
+
+    def bfs(frontier: list[Cell], depth: int, visited: list[Cell]) -> Cell | None:
+        frontier = [c for f in frontier for c in f.adjacent() if c in spaces and c not in visited]
+        if not frontier:
+            return None
+        visited.extend(frontier)
+        if (candidates := all_enemy_adj_cells.intersection(frontier)) and candidates:
+            return sorted(candidates)[0]
+        return bfs(frontier, depth + 1, visited)
+
+    frontier = [c]
+    depth = 0
+    visited = [c]
+    return bfs(frontier, depth + 1, visited)
+
+
 def prob_1(data: list[str]) -> int:
-    spaces = [Cell(x, y) for y, row in enumerate(data) for x, c in enumerate(row) if c != "#"]
-    goblins = [Unit(cell, 3, 200) for cell in spaces if data[cell.y][cell.x] == "G"]
-    elves = [Unit(cell, 3, 200) for cell in spaces if data[cell.y][cell.x] == "E"]
+    cells = [Cell(x, y) for y, row in enumerate(data) for x, c in enumerate(row) if c != "#"]
+    goblins = [Unit(cell, 3, 200) for cell in cells if data[cell.y][cell.x] == "G"]
+    elves = [Unit(cell, 3, 200) for cell in cells if data[cell.y][cell.x] == "E"]
 
     while True:
-        units = sorted([*goblins, *elves])
+        units = sorted(chain(goblins, elves))
 
         for u in units:
-            is_elf = u in elves
-
-            # Killed by a previous unit in this turn?
-            if not is_elf and u not in goblins:
-                continue
-
             # One side all eliminated?
             if not goblins or not elves:
                 return 0  # TODO: Score
 
-            enemies_adj = [enemy for enemy in (goblins if is_elf else elves) if u.cell.dist(enemy.cell) == 1]
+            # Killed by a previous unit in this turn?
+            if u not in elves and u not in goblins:
+                continue
 
-            # Not adjacent to an enemy?
-            if not enemies_adj:
-                all_enemy_adj_cells = {
-                    c for enemy in (goblins if is_elf else elves) for c in enemy.cell.adjacent() if c in spaces
-                }
-                pass
+            is_elf = u in elves
+            enemies = goblins if is_elf else elves
+
+            spaces = [c for c in cells if c not in [u.cell for u in chain(goblins, elves)]]
+
+            # All empty enemy-adjacent cells
+            all_enemy_adj_cells = {c for enemy in enemies for c in enemy.cell.adjacent() if c in spaces}
+
+            # Determine which ones are reachable
+            reachable = find_best_reachable_cell(u.cell, all_enemy_adj_cells, spaces)
+
+            print(f"Gonna move {u.cell} to {reachable}")
+            return
 
     return 0
 
