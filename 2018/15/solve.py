@@ -11,7 +11,7 @@ INPUT = "input.txt"
 PART = 1
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class Cell:
     x: int
     y: int
@@ -25,17 +25,24 @@ class Cell:
     def dist(self, other: Cell) -> int:
         return abs(self.x - other.x) + abs(self.y - other.y)
 
+    def adjacent(self) -> list[Cell]:
+        return [Cell(self.x, self.y - 1), Cell(self.x + 1, self.y), Cell(self.x, self.y + 1), Cell(self.x - 1, self.y)]
+
 
 @dataclass(slots=True)
-class Unit(Cell):
+class Unit:
+    cell: Cell
     ap: int
     hp: int
+
+    def __lt__(self, other: Unit) -> bool:
+        return self.cell < other.cell
 
 
 def prob_1(data: list[str]) -> int:
     spaces = [Cell(x, y) for y, row in enumerate(data) for x, c in enumerate(row) if c != "#"]
-    goblins = [Unit(cell.x, cell.y, 3, 200) for cell in spaces if data[cell.y][cell.x] == "G"]
-    elves = [Unit(cell.x, cell.y, 3, 200) for cell in spaces if data[cell.y][cell.x] == "E"]
+    goblins = [Unit(cell, 3, 200) for cell in spaces if data[cell.y][cell.x] == "G"]
+    elves = [Unit(cell, 3, 200) for cell in spaces if data[cell.y][cell.x] == "E"]
 
     while True:
         units = sorted([*goblins, *elves])
@@ -51,10 +58,13 @@ def prob_1(data: list[str]) -> int:
             if not goblins or not elves:
                 return 0  # TODO: Score
 
-            enemies_adj = [enemy for enemy in (goblins if is_elf else elves) if u.dist(enemy) == 1]
+            enemies_adj = [enemy for enemy in (goblins if is_elf else elves) if u.cell.dist(enemy.cell) == 1]
 
             # Not adjacent to an enemy?
             if not enemies_adj:
+                all_enemy_adj_cells = {
+                    c for enemy in (goblins if is_elf else elves) for c in enemy.cell.adjacent() if c in spaces
+                }
                 pass
 
     return 0
